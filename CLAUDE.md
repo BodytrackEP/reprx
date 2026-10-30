@@ -25,6 +25,33 @@ Next.js 16 (App Router, RSC, Server Actions), TypeScript strict, Tailwind 4, Sup
 
 See [.env.example](.env.example). `SUPABASE_SECRET_KEY` is server-only: import it only through `lib/supabase/admin.ts`, and mark it **Sensitive** in Vercel.
 
+Local setup: `pnpm exec supabase start`, then `pnpm env:local` writes `.env.local` from the running stack.
+
+## Hosted Supabase project settings
+
+Set these by hand in each hosted project (`config.toml` only covers local):
+
+- **Authentication → Sign In / Providers:** turn **off** "Allow new users to sign up", and leave the **Email provider enabled**. Turning off "signups" inside the email provider disables all password login.
+- **Minimum password length:** 12. Enable leaked-password protection if the plan offers it; if not, record that here.
+- **MFA:** TOTP enabled.
+- **URL Configuration:** Site URL = the deployment URL, with `<site>/**` in the redirect list.
+- **Email Templates → Invite user:** paste [supabase/templates/invite.html](supabase/templates/invite.html). The default template won't work, because the server can't read tokens from a URL fragment.
+- **Environment:** run once in the SQL editor: `update public.app_settings set environment = 'test';` (or `'prod'`). Every database starts as `unset`, which the seed refuses.
+
+## First admin (run once per project)
+
+Public sign-up is off, so the first admin is created by hand:
+
+1. Authentication → Users → **Add user**, with an email and a password of 12+ characters, and tick auto-confirm.
+2. In the SQL editor, using that email:
+
+```sql
+insert into public.staff (id, display_name, role)
+select id, 'Your Name', 'admin' from auth.users where email = 'you@example.com';
+```
+
+3. Sign in. TOTP enrolment runs on first login. Invite everyone else from `/admin/staff`.
+
 ## Conventions
 
 - **Migration-first.** Every schema change is a new file in `supabase/migrations/`, then `pnpm db:types`. Never edit the schema through the dashboard.
@@ -56,5 +83,10 @@ See [.env.example](.env.example). `SUPABASE_SECRET_KEY` is server-only: import i
 | 2026-10-31 | Staff attribution (`added_by`, `recorded_by`, `set_by`) must equal `auth.uid()` on insert, enforced by RLS. |
 | 2026-10-31 | `effective_weights*` read a `security_invoker` view, so RLS applies. Soft-deleted clients are excluded and don't count towards capacity. `effective_weights_for_client` also returns `class_id`. |
 | 2026-10-31 | `move_client` has an optional fourth parameter for the capacity override; `move_clients` is the bulk form. |
+| 2026-10-31 | No browser Supabase client: all auth and data calls run on the server, so session cookies are `httpOnly` and the CSP's `connect-src` is `'self'`. |
+| 2026-10-31 | Staff rows are inserted through the admin's own session, not the secret key, so the audit log records who sent an invite. |
+| 2026-10-31 | The session timeout is absolute, measured from the last password/TOTP in the JWT `amr` claim, and enforced in `proxy.ts`. Token refreshes don't extend it. |
+| 2026-10-31 | Admins can't demote or deactivate themselves, which guarantees one active admin remains. |
+| 2026-10-31 | Dev allows inline styles for Next's overlay. CI runs Playwright against the production build, because only that has the strict nonce CSP. |
 | 2026-10-31 | Custom SQLSTATEs: RX001 capacity, RX002 reorder, RX003 RM test locked, RX004 override locked, RX005 audit immutable, RX006 invalid move. |
 | 2026-10-31 | `rm_tests.estimated_1rm_kg` keeps the spec's expression. `lib/calc.ts` computes exactly, so it can differ by 0.01 kg on rare half-cent cases; the database value is authoritative. |

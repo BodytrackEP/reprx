@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,7 +8,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Forces dynamic rendering everywhere: the CSP nonce needs it, and nothing here may be cached.
+  await connection();
+
   return (
     <html lang="en-AU">
       <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">

@@ -1,9 +1,6 @@
+import { redirect } from "next/navigation";
+
+// proxy.ts sends signed-in users on; this covers anything it lets through.
 export default function Home() {
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-3xl font-bold">
-        Rep<span className="text-indigo-600">Rx</span>
-      </h1>
-    </main>
-  );
+  redirect("/admin");
 }

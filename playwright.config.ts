@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+process.loadEnvFile(".env.local");
+
 export default defineConfig({
   testDir: "./e2e",
   forbidOnly: !!process.env.CI,
@@ -11,7 +13,8 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "pnpm dev",
+    // CI tests the production build, because the strict CSP only applies there.
+    command: process.env.CI ? "pnpm build && pnpm start" : "pnpm dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
   },
