@@ -350,6 +350,9 @@ isOneToOne: false
 "round_to_increment":
 { Args: { "p_increment": number,"p_kg": number }; Returns: number
                            },
+"set_client_classes":
+{ Args: { "p_allow_over_capacity"?: boolean,"p_class_ids": (number)[],"p_client_id": number }; Returns: undefined
+                           },
 "set_override":
 { Args: { "p_client_id": number,"p_exercise_id": number,"p_reason": string,"p_review_date"?: string,"p_weight_kg": number }; Returns: number
                            }

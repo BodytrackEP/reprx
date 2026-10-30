@@ -88,5 +88,8 @@ select id, 'Your Name', 'admin' from auth.users where email = 'you@example.com';
 | 2026-10-31 | The session timeout is absolute, measured from the last password/TOTP in the JWT `amr` claim, and enforced in `proxy.ts`. Token refreshes don't extend it. |
 | 2026-10-31 | Admins can't demote or deactivate themselves, which guarantees one active admin remains. |
 | 2026-10-31 | Dev allows inline styles for Next's overlay. CI runs Playwright against the production build, because only that has the strict nonce CSP. |
+| 2026-10-31 | New clients take `is_test` from `app_settings.environment`: true on local/test, false on prod, refused on `unset`. This enforces D2 and stops a misconfigured prod labelling real people as purgeable. |
+| 2026-10-31 | Soft-deleted clients keep their memberships, so restoring returns them to their classes. |
+| 2026-10-31 | `set_client_classes` replaces a client's memberships atomically, for the multi-select on the client page. |
 | 2026-10-31 | Custom SQLSTATEs: RX001 capacity, RX002 reorder, RX003 RM test locked, RX004 override locked, RX005 audit immutable, RX006 invalid move. |
 | 2026-10-31 | `rm_tests.estimated_1rm_kg` keeps the spec's expression. `lib/calc.ts` computes exactly, so it can differ by 0.01 kg on rare half-cent cases; the database value is authoritative. |

@@ -2,23 +2,32 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CategoryBadge } from "@/components/category-badge";
 import { requireStaff } from "@/lib/auth";
+import { byName, clientName } from "@/lib/clients";
 import { DAY_NAMES } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 import { formatTime } from "@/lib/time";
 import { idSchema } from "@/lib/validation/catalog";
 import { EditClassButton } from "../class-form";
+import { type Member, MembersPanel } from "./members-panel";
 
 const buttonClass =
   "rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50";
 
 export default async function ClassDetailPage({ params }: PageProps<"/admin/classes/[id]">) {
-  await requireStaff();
+  const staff = await requireStaff();
   const id = idSchema.safeParse((await params).id);
   if (!id.success) notFound();
   const classId = id.data;
 
   const supabase = await createClient();
-  const [{ data: classRow }, { data: program }, { data: categories, error }] = await Promise.all([
+  const [
+    { data: classRow },
+    { data: program },
+    { data: categories, error },
+    { data: clients },
+    { data: otherClasses },
+    { data: weights },
+  ] = await Promise.all([
     supabase
       .from("classes")
       .select("*, class_categories(label, colour)")
@@ -33,12 +42,49 @@ export default async function ClassDetailPage({ params }: PageProps<"/admin/clas
       .order("order_index", { referencedTable: "program_exercises" })
       .maybeSingle(),
     supabase.from("class_categories").select("code, label").order("sort_order"),
+    supabase
+      .from("clients")
+      .select("id, first_name, last_name, preferred_name, class_members(class_id)")
+      .is("deleted_at", null)
+      .eq("is_active", true),
+    supabase
+      .from("classes")
+      .select("id, name")
+      .eq("is_active", true)
+      .neq("id", classId)
+      .order("name"),
+    supabase.rpc("effective_weights", { p_class_id: classId }),
   ]);
 
   if (!classRow) notFound();
   if (error) throw new Error("Could not load categories.");
 
   const rows = program?.program_exercises ?? [];
+
+  const { data: memberRows } = await supabase
+    .from("class_members")
+    .select("clients(id, first_name, last_name, preferred_name, deleted_at)")
+    .eq("class_id", classId);
+
+  const needsTest = (weights ?? []).filter((weight) => weight.rm_percentage !== null);
+  const members: Member[] = (memberRows ?? [])
+    .map((row) => row.clients)
+    .filter((client) => !client.deleted_at)
+    .sort(byName)
+    .map((client) => {
+      const own = needsTest.filter((weight) => weight.client_id === client.id);
+      return {
+        id: client.id,
+        name: clientName(client),
+        testable: own.length,
+        tested: own.filter((weight) => weight.latest_1rm_kg !== null).length,
+      };
+    });
+
+  const candidates = (clients ?? [])
+    .filter((client) => !client.class_members.some((row) => row.class_id === classId))
+    .sort(byName)
+    .map((client) => ({ id: client.id, name: clientName(client) }));
 
   return (
     <div>
@@ -82,7 +128,14 @@ export default async function ClassDetailPage({ params }: PageProps<"/admin/clas
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          {/* Members: milestone 5 */}
+          <MembersPanel
+            classId={classId}
+            members={members}
+            capacity={classRow.max_capacity}
+            candidates={candidates}
+            otherClasses={otherClasses ?? []}
+            isAdmin={staff.isAdmin}
+          />
         </div>
 
         <div>

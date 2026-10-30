@@ -47,6 +47,13 @@ select throws_ok('select public.add_class_members(3002, array[1002]::bigint[])',
 select throws_ok('select public.add_class_members(3002, array[1002]::bigint[], true)',
   'RX001', null, 'an EP cannot use the capacity override');
 
+-- Assigning classes is all-or-nothing
+select throws_ok('select public.set_client_classes(1003, array[3002]::bigint[])',
+  'RX001', null, 'assigning a full class fails');
+select is(
+  (select array_agg(class_id) from public.class_members where client_id = 1003),
+  array[3001]::bigint[], 'a failed assignment keeps the existing classes');
+
 -- A failed move changes nothing
 select throws_ok('select public.move_client(1002, 3001, 3002)', 'RX001', null,
   'a move into a full class fails');
