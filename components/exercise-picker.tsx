@@ -55,6 +55,9 @@ export function ExercisePicker({
           label="Exercise name"
           value={name}
           onChange={(event) => setName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.preventDefault();
+          }}
           autoFocus
         />
         <div className="grid grid-cols-2 gap-3">
@@ -110,6 +113,10 @@ export function ExercisePicker({
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
+        onKeyDown={(event) => {
+          // Inside a form, Enter here must not submit it.
+          if (event.key === "Enter") event.preventDefault();
+        }}
       />
       <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
         {matches.map((exercise) => (

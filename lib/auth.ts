@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
-export type FormState = { error?: string; success?: string };
+export type { FormState } from "./auth-types";
 
 /**
  * The signed-in staff member. Reading the row goes through RLS, so it needs an active
