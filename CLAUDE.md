@@ -49,4 +49,12 @@ See [.env.example](.env.example). `SUPABASE_SECRET_KEY` is server-only: import i
 | 2026-10-31 | The strict CSP is set in `proxy.ts` (per-request nonce); other security headers are in `next.config.ts`. |
 | 2026-10-31 | Purge writes one summary audit row; the per-row trigger is bypassed only inside `purge_test_data()` (owner decision). |
 | 2026-10-31 | Seeded rows are attributed to an inactive `seed@reprx.invalid` staff account; `recorded_by`/`set_by` stay NOT NULL (owner decision). |
-| 2026-10-31 | Seed guard is an allowlist: runs only when `app_settings.environment` is `local` or `test`. |
+| 2026-10-31 | Seed guard is an allowlist: runs only when `app_settings.environment` is `local` or `test`. Every database starts as `unset` (corrects the plan, where a migration setting `local` would also have run on prod); only `seed-env-local.sql` moves it to `local`, and hosted projects set it once by hand. API roles cannot change it. |
+| 2026-10-31 | The purge audit bypass is a row in `private.purge_context`, not a GUC: no API role can write it, so a caller can't switch auditing off. |
+| 2026-10-31 | `reprx.allow_over_capacity` is honoured only for admins, and is set through a function parameter (`p_allow_over_capacity`). |
+| 2026-10-31 | Extra NOT NULLs where the spec is silent: `sets`, `reps`, `day_of_week`, `start_time`, `end_time`, `category_code`, and the staff attribution columns. |
+| 2026-10-31 | Staff attribution (`added_by`, `recorded_by`, `set_by`) must equal `auth.uid()` on insert, enforced by RLS. |
+| 2026-10-31 | `effective_weights*` read a `security_invoker` view, so RLS applies. Soft-deleted clients are excluded and don't count towards capacity. `effective_weights_for_client` also returns `class_id`. |
+| 2026-10-31 | `move_client` has an optional fourth parameter for the capacity override; `move_clients` is the bulk form. |
+| 2026-10-31 | Custom SQLSTATEs: RX001 capacity, RX002 reorder, RX003 RM test locked, RX004 override locked, RX005 audit immutable, RX006 invalid move. |
+| 2026-10-31 | `rm_tests.estimated_1rm_kg` keeps the spec's expression. `lib/calc.ts` computes exactly, so it can differ by 0.01 kg on rare half-cent cases; the database value is authoritative. |
