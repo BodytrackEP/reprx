@@ -11,11 +11,13 @@ export const linkButton = "text-sm font-medium text-indigo-600 hover:text-indigo
 /** Native <dialog>: focus trapping, Esc to close and the backdrop come with it. */
 export function Modal({
   label,
+  ariaLabel,
   title,
   buttonClassName = primaryButton,
   children,
 }: {
-  label: string;
+  label: React.ReactNode;
+  ariaLabel?: string;
   title: string;
   buttonClassName?: string;
   children: (close: () => void) => React.ReactNode;
@@ -27,6 +29,7 @@ export function Modal({
     <>
       <button
         type="button"
+        aria-label={ariaLabel}
         className={buttonClassName}
         onClick={() => dialog?.showModal()}
       >

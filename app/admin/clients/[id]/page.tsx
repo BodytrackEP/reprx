@@ -3,11 +3,15 @@ import { notFound } from "next/navigation";
 import { CategoryBadge } from "@/components/category-badge";
 import { ClientChips } from "@/components/client-chips";
 import { ConfirmButton } from "@/components/confirm-button";
+import { OverrideButton } from "@/components/override-button";
+import { RmHistory } from "@/components/rm-history";
+import { isReviewDue } from "@/components/weight-display";
 import { requireStaff } from "@/lib/auth";
 import { clientName } from "@/lib/clients";
 import { DAY_NAMES } from "@/lib/constants";
+import { summariseRmTests } from "@/lib/rm";
 import { createClient } from "@/lib/supabase/server";
-import { formatTime } from "@/lib/time";
+import { formatDate, formatTime, todayIso } from "@/lib/time";
 import { idSchema } from "@/lib/validation/catalog";
 import {
   deactivateClient,
@@ -20,14 +24,18 @@ import { ClassAssignButton } from "./class-assign";
 
 const quietButton = "text-sm text-gray-500 hover:text-gray-800";
 
-export default async function ClientDetailPage({ params }: PageProps<"/admin/clients/[id]">) {
+export default async function ClientDetailPage({
+  params,
+  searchParams,
+}: PageProps<"/admin/clients/[id]">) {
   const staff = await requireStaff();
   const id = idSchema.safeParse((await params).id);
   if (!id.success) notFound();
   const clientId = id.data;
+  const tab = (await searchParams).tab === "overrides" ? "overrides" : "rm";
 
   const supabase = await createClient();
-  const [{ data: client }, { data: classes }] = await Promise.all([
+  const [{ data: client }, { data: classes }, { data: testRows }, { data: overrideRows }] = await Promise.all([
     supabase
       .from("clients")
       .select(
@@ -36,11 +44,33 @@ export default async function ClientDetailPage({ params }: PageProps<"/admin/cli
       .eq("id", clientId)
       .maybeSingle(),
     supabase.from("classes").select("id, name").eq("is_active", true).order("name"),
+    supabase
+      .from("rm_tests")
+      .select(
+        "id, exercise_id, test_date, created_at, reps, weight_kg, estimated_1rm_kg, notes, voided_at, voided_reason, exercises(name)",
+      )
+      .eq("client_id", clientId)
+      .order("test_date", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("weight_overrides")
+      .select(
+        "id, exercise_id, override_weight_kg, reason, review_date, set_at, ended_at, exercises(name)",
+      )
+      .eq("client_id", clientId)
+      .order("set_at", { ascending: false }),
   ]);
   if (!client) notFound();
 
   const memberships = client.class_members.map((member) => member.classes);
   const name = clientName(client);
+  const today = todayIso();
+  const tests = testRows ?? [];
+  const overrides = overrideRows ?? [];
+  const activeOverrides = overrides.filter((override) => !override.ended_at);
+  const summary = summariseRmTests(
+    tests.map((test) => ({ ...test, exercise_name: test.exercises.name })),
+  );
 
   return (
     <div>
@@ -153,6 +183,168 @@ export default async function ClientDetailPage({ params }: PageProps<"/admin/cli
               <p className="text-sm text-gray-500">Not in any classes yet.</p>
             )}
           </div>
+        </section>
+
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            Active Overrides ({activeOverrides.length})
+          </h2>
+          {activeOverrides.length > 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {activeOverrides.map((override) => (
+                <div
+                  key={override.id}
+                  className="rounded-xl border border-gray-200 border-l-4 border-l-amber-400 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-sm font-medium text-gray-900">
+                      {override.exercises.name}
+                    </h3>
+                    <span className="font-semibold text-amber-800">
+                      {override.override_weight_kg} kg
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-600">{override.reason}</p>
+                  {override.review_date && (
+                    <p
+                      className={`mt-1 text-xs ${
+                        isReviewDue(override.review_date, today)
+                          ? "font-semibold text-red-700"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {isReviewDue(override.review_date, today) ? "Review due: " : "Review: "}
+                      {formatDate(override.review_date)}
+                    </p>
+                  )}
+                  <div className="mt-2">
+                    <OverrideButton
+                      label="Change override"
+                      ariaLabel={`Change override for ${override.exercises.name}`}
+                      target={{
+                        clientId,
+                        clientName: name,
+                        exerciseId: override.exercise_id,
+                        exerciseName: override.exercises.name,
+                        overrideKg: override.override_weight_kg,
+                        reason: override.reason,
+                        reviewDate: override.review_date,
+                        calculatedKg: null,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No active overrides.</p>
+          )}
+        </section>
+
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">RM Summary</h2>
+            <Link
+              href={`/admin/rm-testing?client=${clientId}`}
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+            >
+              Record New Test &rarr;
+            </Link>
+          </div>
+          {summary.length > 0 ? (
+            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Exercise</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Latest 1RM</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Change</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Test date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Tests</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {summary.map((row) => (
+                    <tr key={row.exerciseId} className="hover:bg-gray-50">
+                      <td className="px-6 py-3 text-sm font-medium text-gray-900">{row.exerciseName}</td>
+                      <td className="px-6 py-3 text-sm font-semibold text-gray-900">{row.latest1Rm} kg</td>
+                      <td className="px-6 py-3 text-sm">
+                        {row.change === null ? (
+                          <span className="text-gray-500">First test</span>
+                        ) : row.change > 0 ? (
+                          <span className="font-medium text-emerald-700">+{row.change} kg</span>
+                        ) : row.change < 0 ? (
+                          <span className="font-medium text-red-700">{row.change} kg</span>
+                        ) : (
+                          <span className="text-gray-500">No change</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3 text-sm text-gray-500">{formatDate(row.latestDate)}</td>
+                      <td className="px-6 py-3 text-sm text-gray-500">{row.tests}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No RM tests recorded yet.</p>
+          )}
+        </section>
+
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">History</h2>
+          <nav aria-label="History" className="mb-4 flex gap-2">
+            {[
+              { key: "rm", label: "RM tests" },
+              { key: "overrides", label: "Overrides" },
+            ].map(({ key, label }) => (
+              <Link
+                key={key}
+                href={`/admin/clients/${clientId}?tab=${key}`}
+                scroll={false}
+                aria-current={tab === key ? "page" : undefined}
+                className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                  tab === key
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          {tab === "rm" ? (
+            <RmHistory tests={tests} />
+          ) : overrides.length > 0 ? (
+            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Exercise</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Weight</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Reason</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Set</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Ended</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {overrides.map((override) => (
+                    <tr key={override.id}>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{override.exercises.name}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{override.override_weight_kg} kg</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{override.reason}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{formatDate(override.set_at)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">
+                        {override.ended_at ? formatDate(override.ended_at) : "Active"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No override history.</p>
+          )}
         </section>
       </div>
     </div>
