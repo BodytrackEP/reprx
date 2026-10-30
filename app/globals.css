@@ -2,3 +2,16 @@
 
 /* class_categories.colour values live in the database, where Tailwind can't see them. */
 @source inline("bg-blue-100 text-blue-800 bg-red-100 text-red-800 bg-amber-100 text-amber-800 bg-purple-100 text-purple-800 bg-green-100 text-green-800 bg-teal-100 text-teal-800 bg-pink-100 text-pink-800 bg-gray-100 text-gray-800");
+
+/* The session sheet is the app's one printed page. */
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
+@media print {
+  html,
+  body {
+    background: white;
+  }
+}

@@ -40,7 +40,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           </div>
         </div>
       </nav>
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 print:max-w-none print:p-0">
+        {children}
+      </main>
     </>
   );
 }
