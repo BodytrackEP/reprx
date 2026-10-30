@@ -52,6 +52,29 @@ select id, 'Your Name', 'admin' from auth.users where email = 'you@example.com';
 
 3. Sign in. TOTP enrolment runs on first login. Invite everyone else from `/admin/staff`.
 
+## Cut-over: before any real client is entered (§7, D2)
+
+Real clients go only into prod, so this must happen first. **Stop and confirm with the owner before doing it.**
+
+1. Create the prod Supabase project (Sydney, Pro plan) and the Vercel production deployment.
+2. Run migrations with `supabase db push`, **without the seed**.
+3. Apply the hosted settings above, setting `environment = 'prod'`, then create the first admin.
+4. Confirm a Preview deployment can't reach prod: its environment variables must point at `test`.
+5. Complete the "before any real client" list in [docs/PRIVACY_CHECKLIST.md](docs/PRIVACY_CHECKLIST.md).
+
+## Backups
+
+Prod relies on Supabase Pro daily backups. Run a **quarterly restore drill**: restore into a scratch project, check row counts and sign in, then record the date and result here.
+
+## Performance (§10)
+
+Target: the session view for 15 members × 12 exercises renders in under 300 ms server time. Measured on 2026-10-31 on a local production build and local Supabase (Windows, Docker):
+
+- `EXPLAIN ANALYZE` of `effective_weights` as an AAL2 EP under RLS, 180 rows: 3.3–4.7 ms execution, under 0.1 ms planning. The latest-test lookup uses `rm_tests_latest_idx`.
+- Whole page: median 140 ms, worst warm 191 ms. The first two cold requests took 247 ms and 343 ms, so a cold function can exceed the target.
+
+Re-measure on Vercel syd1 against hosted Supabase, which adds a network hop per query.
+
 ## Conventions
 
 - **Migration-first.** Every schema change is a new file in `supabase/migrations/`, then `pnpm db:types`. Never edit the schema through the dashboard.
@@ -91,5 +114,7 @@ select id, 'Your Name', 'admin' from auth.users where email = 'you@example.com';
 | 2026-10-31 | New clients take `is_test` from `app_settings.environment`: true on local/test, false on prod, refused on `unset`. This enforces D2 and stops a misconfigured prod labelling real people as purgeable. |
 | 2026-10-31 | Soft-deleted clients keep their memberships, so restoring returns them to their classes. |
 | 2026-10-31 | `set_client_classes` replaces a client's memberships atomically, for the multi-select on the client page. |
+| 2026-10-31 | Playwright runs serially, because `zz-purge.spec.ts` deletes every test client. Commit messages go through Git Bash, because Windows PowerShell 5.1 breaks double quotes passed to git. |
+| 2026-10-31 | Phase 3 draft: clients and staff share the `authenticated` role, so column grants can't hide `override.reason`. Clients get no policy on `weight_overrides` and read through `my_overrides()`. |
 | 2026-10-31 | Custom SQLSTATEs: RX001 capacity, RX002 reorder, RX003 RM test locked, RX004 override locked, RX005 audit immutable, RX006 invalid move. |
 | 2026-10-31 | `rm_tests.estimated_1rm_kg` keeps the spec's expression. `lib/calc.ts` computes exactly, so it can differ by 0.01 kg on rare half-cent cases; the database value is authoritative. |

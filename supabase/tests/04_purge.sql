@@ -6,6 +6,12 @@ select no_plan();
 grant usage on schema extensions to authenticated;
 grant execute on all functions in schema extensions to authenticated;
 
+-- Start from nothing, whatever the seed added. All of this rolls back.
+delete from public.clients;
+delete from public.programs;
+delete from public.classes;
+delete from public.exercises;
+
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000b', 'admin@test.invalid');
 insert into public.staff (id, display_name, role) values

@@ -17,6 +17,14 @@ export function formatTime(time: string) {
   return time.slice(0, 5);
 }
 
+export function formatDateTime(iso: string) {
+  return new Intl.DateTimeFormat("en-AU", {
+    timeZone: PRACTICE_TIME_ZONE,
+    dateStyle: "short",
+    timeStyle: "medium",
+  }).format(new Date(iso));
+}
+
 export function formatDate(iso: string) {
   const [year, month, day] = iso.slice(0, 10).split("-");
   return `${day}/${month}/${year}`;

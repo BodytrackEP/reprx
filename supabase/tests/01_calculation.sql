@@ -135,6 +135,13 @@ select results_eq(
   $$ values (null::numeric, 'bodyweight'::text) $$,
   'no percentage means bodyweight');
 
+-- The rounding increment comes from settings
+update public.app_settings set rounding_increment_kg = 1.25;
+select is(
+  (select effective_kg from public.effective_weights(3002) where client_id = 1001 and exercise_id = 2001),
+  28.75::numeric, 'the configured increment drives the rounding');
+update public.app_settings set rounding_increment_kg = 2.5;
+
 -- For-client variant, and soft-deleted clients
 select is(
   (select count(*)::int from public.effective_weights_for_client(1001)), 5,

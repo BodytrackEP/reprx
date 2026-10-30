@@ -35,6 +35,9 @@ jobs:
       - run: pnpm exec supabase start
       - run: pnpm db:reset
       - run: pnpm db:test
+      # Re-running the seed must be safe.
+      - run: pnpm env:local
+      - run: pnpm seed:test
 
   e2e:
     runs-on: ubuntu-latest

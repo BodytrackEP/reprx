@@ -4,6 +4,8 @@ process.loadEnvFile(".env.local");
 
 export default defineConfig({
   testDir: "./e2e",
+  // Serial, because zz-purge.spec.ts deletes test clients that other specs create.
+  workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
