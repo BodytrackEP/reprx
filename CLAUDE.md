@@ -56,7 +56,7 @@ select id, 'Your Name', 'admin' from auth.users where email = 'you@example.com';
 
 Real clients go only into prod, so this must happen first. **Stop and confirm with the owner before doing it.**
 
-1. Create the prod Supabase project (Sydney, Pro plan) and the Vercel production deployment.
+1. Create the prod Supabase project (**Sydney, `ap-southeast-2`**, Pro plan) and the Vercel production deployment. The region is chosen at creation, so check it before going further: `pnpm exec supabase projects list`. The existing test project is in Singapore and must never hold real clients.
 2. Run migrations with `supabase db push`, **without the seed**.
 3. Apply the hosted settings above, setting `environment = 'prod'`, then create the first admin.
 4. Confirm a Preview deployment can't reach prod: its environment variables must point at `test`.
@@ -116,5 +116,6 @@ Re-measure on Vercel syd1 against hosted Supabase, which adds a network hop per 
 | 2026-10-31 | `set_client_classes` replaces a client's memberships atomically, for the multi-select on the client page. |
 | 2026-10-31 | Playwright runs serially, because `zz-purge.spec.ts` deletes every test client. Commit messages go through Git Bash, because Windows PowerShell 5.1 breaks double quotes passed to git. |
 | 2026-10-31 | Phase 3 draft: clients and staff share the `authenticated` role, so column grants can't hide `override.reason`. Clients get no policy on `weight_overrides` and read through `my_overrides()`. |
+| 2026-10-31 | Owner exception to D1 and §6.5, **test only**: the hosted test project is in Singapore (`ap-southeast-1`). It holds fake clients only, plus staff accounts. D1 still binds prod, which must be in Sydney. Session view timings against this project include Vercel syd1 to Singapore latency, so they don't represent prod. |
 | 2026-10-31 | Custom SQLSTATEs: RX001 capacity, RX002 reorder, RX003 RM test locked, RX004 override locked, RX005 audit immutable, RX006 invalid move. |
 | 2026-10-31 | `rm_tests.estimated_1rm_kg` keeps the spec's expression. `lib/calc.ts` computes exactly, so it can differ by 0.01 kg on rare half-cent cases; the database value is authoritative. |
