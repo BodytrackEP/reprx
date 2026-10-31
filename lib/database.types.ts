@@ -344,6 +344,9 @@ isOneToOne: false
 "purge_test_data":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
+"record_authenticator_reset":
+{ Args: { "p_staff_id": string }; Returns: undefined
+                           },
 "reorder_program_exercises":
 { Args: { "p_ids": (number)[],"p_program_id": number }; Returns: undefined
                            },

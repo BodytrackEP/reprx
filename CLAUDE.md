@@ -75,6 +75,10 @@ Target: the session view for 15 members × 12 exercises renders in under 300 ms 
 
 Re-measure on Vercel syd1 against hosted Supabase, which adds a network hop per query.
 
+## Lost authenticator
+
+An admin uses **Reset authenticator** on `/admin/staff`, after confirming who is asking. Anyone holding that person's password can then enrol a new authenticator, so verify in person or by phone. If the **only** admin loses theirs, use the Supabase dashboard (Authentication → Users → the user → remove the MFA factor). Keep at least two admins to avoid this.
+
 ## Conventions
 
 - **Migration-first.** Every schema change is a new file in `supabase/migrations/`, then `pnpm db:types`. Never edit the schema through the dashboard.
@@ -119,5 +123,6 @@ Re-measure on Vercel syd1 against hosted Supabase, which adds a network hop per 
 | 2026-10-31 | Owner exception to D1 and §6.5, **test only**: the hosted test project is in Singapore (`ap-southeast-1`). It holds fake clients only, plus staff accounts. D1 still binds prod, which must be in Sydney. Session view timings against this project include Vercel syd1 to Singapore latency, so they don't represent prod. |
 | 2026-10-31 | Forgot password (added at the owner's request, not in the spec): a reset link never bypasses TOTP, since it proves only mailbox access. The reply doesn't reveal whether an account exists, and other sessions are signed out afterwards. |
 | 2026-10-31 | `/auth/confirm` spends the one-time token on a button press, not on page load, because email scanners open links automatically. This covers invites and resets. |
-| 2026-10-31 | Custom SQLSTATEs: RX001 capacity, RX002 reorder, RX003 RM test locked, RX004 override locked, RX005 audit immutable, RX006 invalid move. |
+| 2026-10-31 | Authenticator reset (added at the owner's request): `record_authenticator_reset` audits and ends sessions first, then the admin API deletes the factors. Admins can't reset their own. An access token already issued lasts until it expires (up to 1 hour). |
+| 2026-10-31 | Custom SQLSTATEs: RX001 capacity, RX002 reorder, RX003 RM test locked, RX004 override locked, RX005 audit immutable, RX006 invalid move, RX007 invalid authenticator reset. |
 | 2026-10-31 | `rm_tests.estimated_1rm_kg` keeps the spec's expression. `lib/calc.ts` computes exactly, so it can differ by 0.01 kg on rare half-cent cases; the database value is authoritative. |

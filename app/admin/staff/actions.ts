@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 import { type FormState, requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -37,6 +39,34 @@ export async function inviteStaff(_: FormState, formData: FormData): Promise<For
 
   revalidatePath("/admin/staff");
   return { success: `Invite sent to ${email}.` };
+}
+
+export async function resetAuthenticator(formData: FormData) {
+  await requireAdmin();
+  const id = z.uuid().parse(formData.get("id"));
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.mfa.listFactors({ userId: id });
+  if (error) redirect("/admin/staff?mfa=failed");
+  if (data.factors.length === 0) redirect("/admin/staff?mfa=none");
+
+  // Audited as the signed-in admin. If this fails, the authenticator is left in place.
+  const supabase = await createClient();
+  const { error: auditError } = await supabase.rpc("record_authenticator_reset", {
+    p_staff_id: id,
+  });
+  if (auditError) redirect("/admin/staff?mfa=failed");
+
+  for (const factor of data.factors) {
+    const { error: deleteError } = await admin.auth.admin.mfa.deleteFactor({
+      userId: id,
+      id: factor.id,
+    });
+    if (deleteError) redirect("/admin/staff?mfa=failed");
+  }
+
+  revalidatePath("/admin/staff");
+  redirect("/admin/staff?mfa=reset");
 }
 
 export async function updateStaff(formData: FormData) {

@@ -72,7 +72,7 @@ select set_eq($$
   select p.proname::text
   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.prosecdef
-$$, array['is_staff', 'is_admin', 'audit_row', 'purge_test_data'],
+$$, array['is_staff', 'is_admin', 'audit_row', 'purge_test_data', 'record_authenticator_reset'],
 'security definer is limited to the functions that need it');
 
 select * from finish();

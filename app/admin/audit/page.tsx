@@ -134,8 +134,10 @@ export default async function AuditPage({ searchParams }: PageProps<"/admin/audi
                     {formatDateTime(entry.occurred_at)}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
-                    {entry.actor_label ??
-                      (entry.actor ? (names.get(entry.actor) ?? entry.actor) : "System")}
+                    {entry.actor ? (names.get(entry.actor) ?? entry.actor) : "System"}
+                    {entry.actor_label && (
+                      <span className="block text-xs text-gray-500">{entry.actor_label}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">{entry.action}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{entry.table_name}</td>

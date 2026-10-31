@@ -163,6 +163,41 @@ select throws_ok('delete from public.audit_log', 'RX005', null,
 select throws_ok('truncate public.audit_log', 'RX005', null,
   'the audit log cannot be truncated');
 
+-- Authenticator resets: admins only, never your own, always audited
+insert into auth.sessions (id, user_id) values
+  ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000a');
+
+select test_helpers.login('00000000-0000-0000-0000-00000000000a');
+set local role authenticated;
+select throws_ok(
+  $$ select public.record_authenticator_reset('00000000-0000-0000-0000-00000000000b') $$,
+  '42501', null, 'an EP cannot reset an authenticator');
+reset role;
+
+select test_helpers.login('00000000-0000-0000-0000-00000000000b');
+set local role authenticated;
+select throws_ok(
+  $$ select public.record_authenticator_reset('00000000-0000-0000-0000-00000000000b') $$,
+  'RX007', 'You can''t reset your own authenticator. Ask another admin.',
+  'an admin cannot reset their own authenticator');
+select throws_ok(
+  $$ select public.record_authenticator_reset('00000000-0000-0000-0000-0000000000ff') $$,
+  'RX007', null, 'the target must be a staff member');
+select lives_ok(
+  $$ select public.record_authenticator_reset('00000000-0000-0000-0000-00000000000a') $$,
+  'an admin resets another staff member');
+reset role;
+
+select is_empty(
+  $$ select 1 from auth.sessions where user_id = '00000000-0000-0000-0000-00000000000a' $$,
+  'the reset ends that person''s sessions');
+select results_eq(
+  $$ select actor::text, actor_label, row_pk from public.audit_log
+     where actor_label = 'mfa:reset' $$,
+  $$ values ('00000000-0000-0000-0000-00000000000b'::text, 'mfa:reset'::text,
+             '00000000-0000-0000-0000-00000000000a'::text) $$,
+  'the reset is audited with the admin and the target');
+
 -- Jobs label themselves
 select set_config('reprx.actor_label', 'sync:cliniko', true);
 select set_config('request.jwt.claims', '', true);
