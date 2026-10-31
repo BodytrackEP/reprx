@@ -4,7 +4,7 @@ import type { Database } from "@/lib/database.types";
 import { isSessionExpired } from "@/lib/session";
 import { authCookieOptions } from "@/lib/supabase/cookies";
 
-const PUBLIC_PATHS = ["/login", "/auth/confirm"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/auth/confirm"];
 
 function contentSecurityPolicy(nonce: string) {
   const isDev = process.env.NODE_ENV === "development";

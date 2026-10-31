@@ -27,6 +27,28 @@ export async function createStaff(role: "admin" | "ep") {
   return { id: data.user.id, email };
 }
 
+/** The link in the newest local email to this address with this subject. */
+export async function emailLink(to: string, subject: string) {
+  const query = encodeURIComponent(`to:${to} subject:"${subject}"`);
+
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const search = await fetch(
+      `${process.env.MAILPIT_URL}/api/v1/search?query=${query}`,
+    ).then((response) => response.json());
+
+    if (search.messages?.length > 0) {
+      const message = await fetch(
+        `${process.env.MAILPIT_URL}/api/v1/message/${search.messages[0].ID}`,
+      ).then((response) => response.json());
+      return /href="([^"]+)"/.exec(message.HTML)![1].replaceAll("&amp;", "&");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+
+  throw new Error(`No email to ${to}`);
+}
+
 /** RFC 6238 TOTP (SHA-1, 30 s, 6 digits), for answering the MFA prompt. */
 export function totp(secret: string) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";

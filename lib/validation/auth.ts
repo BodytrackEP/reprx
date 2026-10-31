@@ -19,6 +19,15 @@ export const newPasswordSchema = z
     message: "The passwords don't match.",
   });
 
+export const forgotPasswordSchema = z.object({
+  email: z.email("Enter a valid email address."),
+});
+
+export const emailLinkSchema = z.object({
+  tokenHash: z.string().min(1),
+  type: z.enum(["invite", "recovery"]),
+});
+
 export const inviteSchema = z.object({
   email: z.email("Enter a valid email address."),
   displayName: z.string().trim().min(1, "Enter a name.").max(100),

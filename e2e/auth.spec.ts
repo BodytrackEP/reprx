@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   admin,
   createStaff,
+  emailLink,
   enrolTotp,
   PASSWORD,
   signInFully,
@@ -101,17 +102,12 @@ test("an admin invites a new EP, who sets a password and enrols", async ({
   await expect(page.getByRole("status")).toContainText("Invite sent");
   await expect(page.getByRole("cell", { name })).toBeVisible();
 
-  const search = await fetch(
-    `${process.env.MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`,
-  ).then((response) => response.json());
-  const message = await fetch(
-    `${process.env.MAILPIT_URL}/api/v1/message/${search.messages[0].ID}`,
-  ).then((response) => response.json());
-  const link = /href="([^"]+)"/.exec(message.HTML)![1].replaceAll("&amp;", "&");
+  const link = await emailLink(email, "invited to RepRx");
 
   const context = await browser.newContext();
   const invited = await context.newPage();
   await invited.goto(link);
+  await invited.getByRole("button", { name: "Continue" }).click();
   await expect(invited).toHaveURL(/\/accept-invite$/);
 
   await invited.getByLabel("New password").fill("short");

@@ -35,7 +35,7 @@ Set these by hand in each hosted project (`config.toml` only covers local):
 - **Minimum password length:** 12. Enable leaked-password protection if the plan offers it; if not, record that here.
 - **MFA:** TOTP enabled.
 - **URL Configuration:** Site URL = the deployment URL, with `<site>/**` in the redirect list.
-- **Email Templates → Invite user:** paste [supabase/templates/invite.html](supabase/templates/invite.html). The default template won't work, because the server can't read tokens from a URL fragment.
+- **Email Templates → Invite user:** paste [supabase/templates/invite.html](supabase/templates/invite.html). **Reset password:** paste [supabase/templates/recovery.html](supabase/templates/recovery.html). The default templates won't work, because the server can't read tokens from a URL fragment.
 - **Environment:** run once in the SQL editor: `update public.app_settings set environment = 'test';` (or `'prod'`). Every database starts as `unset`, which the seed refuses.
 
 ## First admin (run once per project)
@@ -117,5 +117,7 @@ Re-measure on Vercel syd1 against hosted Supabase, which adds a network hop per 
 | 2026-10-31 | Playwright runs serially, because `zz-purge.spec.ts` deletes every test client. Commit messages go through Git Bash, because Windows PowerShell 5.1 breaks double quotes passed to git. |
 | 2026-10-31 | Phase 3 draft: clients and staff share the `authenticated` role, so column grants can't hide `override.reason`. Clients get no policy on `weight_overrides` and read through `my_overrides()`. |
 | 2026-10-31 | Owner exception to D1 and §6.5, **test only**: the hosted test project is in Singapore (`ap-southeast-1`). It holds fake clients only, plus staff accounts. D1 still binds prod, which must be in Sydney. Session view timings against this project include Vercel syd1 to Singapore latency, so they don't represent prod. |
+| 2026-10-31 | Forgot password (added at the owner's request, not in the spec): a reset link never bypasses TOTP, since it proves only mailbox access. The reply doesn't reveal whether an account exists, and other sessions are signed out afterwards. |
+| 2026-10-31 | `/auth/confirm` spends the one-time token on a button press, not on page load, because email scanners open links automatically. This covers invites and resets. |
 | 2026-10-31 | Custom SQLSTATEs: RX001 capacity, RX002 reorder, RX003 RM test locked, RX004 override locked, RX005 audit immutable, RX006 invalid move. |
 | 2026-10-31 | `rm_tests.estimated_1rm_kg` keeps the spec's expression. `lib/calc.ts` computes exactly, so it can differ by 0.01 kg on rare half-cent cases; the database value is authoritative. |
