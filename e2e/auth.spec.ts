@@ -100,7 +100,7 @@ test("an admin invites a new EP, who sets a password and enrols", async ({
   await page.getByLabel("Staff email").fill(email);
   await page.getByRole("button", { name: "Send invite" }).click();
   await expect(page.getByRole("status")).toContainText("Invite sent");
-  await expect(page.getByRole("cell", { name })).toBeVisible();
+  await expect(page.getByRole("cell", { name, exact: true })).toBeVisible();
 
   const link = await emailLink(email, "invited to RepRx");
 

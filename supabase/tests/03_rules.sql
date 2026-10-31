@@ -198,6 +198,32 @@ select results_eq(
              '00000000-0000-0000-0000-00000000000a'::text) $$,
   'the reset is audited with the admin and the target');
 
+-- Invite links: admins only, always audited, and the link is never stored
+select test_helpers.login('00000000-0000-0000-0000-00000000000a');
+set local role authenticated;
+select throws_ok(
+  $$ select public.record_invite_link('00000000-0000-0000-0000-00000000000b') $$,
+  '42501', null, 'an EP cannot create an invite link');
+reset role;
+
+select test_helpers.login('00000000-0000-0000-0000-00000000000b');
+set local role authenticated;
+select throws_ok(
+  $$ select public.record_invite_link('00000000-0000-0000-0000-0000000000ff') $$,
+  'RX007', null, 'an invite link needs an active staff member');
+select lives_ok(
+  $$ select public.record_invite_link('00000000-0000-0000-0000-00000000000a') $$,
+  'an admin records an invite link');
+reset role;
+
+select results_eq(
+  $$ select actor::text, row_pk, new_row from public.audit_log
+     where actor_label = 'invite:link' $$,
+  $$ values ('00000000-0000-0000-0000-00000000000b'::text,
+             '00000000-0000-0000-0000-00000000000a'::text,
+             '{"event": "invite_link_created"}'::jsonb) $$,
+  'the audit row names the admin and the person, and holds no link');
+
 -- Jobs label themselves
 select set_config('reprx.actor_label', 'sync:cliniko', true);
 select set_config('request.jwt.claims', '', true);

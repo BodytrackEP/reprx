@@ -32,6 +32,7 @@ export const inviteSchema = z.object({
   email: z.email("Enter a valid email address."),
   displayName: z.string().trim().min(1, "Enter a name.").max(100),
   role: z.enum(["ep", "admin"]),
+  mode: z.enum(["email", "link"]).default("email"),
 });
 
 export const staffUpdateSchema = z.object({

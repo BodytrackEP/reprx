@@ -347,6 +347,9 @@ isOneToOne: false
 "record_authenticator_reset":
 { Args: { "p_staff_id": string }; Returns: undefined
                            },
+"record_invite_link":
+{ Args: { "p_staff_id": string }; Returns: undefined
+                           },
 "reorder_program_exercises":
 { Args: { "p_ids": (number)[],"p_program_id": number }; Returns: undefined
                            },

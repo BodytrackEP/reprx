@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { resetAuthenticator, updateStaff } from "./actions";
 import { InviteForm } from "./invite-form";
+import { InviteLinkButton } from "./invite-link";
 
 const MFA_NOTICES: Record<string, string> = {
   reset: "Authenticator reset. They set up a new one the next time they sign in.",
@@ -26,7 +27,8 @@ export default async function StaffPage({ searchParams }: PageProps<"/admin/staf
   // Staff emails live in auth.users, which only the admin API can read.
   const admin = createAdminClient();
   const { data: users } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  const emails = new Map(users.users.map((user) => [user.id, user.email]));
+  const accounts = new Map(users.users.map((user) => [user.id, user]));
+  const isPending = (id: string) => !accounts.get(id)?.email_confirmed_at;
 
   // listUsers doesn't include MFA factors, so these are fetched per person.
   const enrolled = new Set(
@@ -70,13 +72,13 @@ export default async function StaffPage({ searchParams }: PageProps<"/admin/staf
               <tr key={member.id}>
                 <td className="px-6 py-3 text-sm font-medium text-gray-900">{member.display_name}</td>
                 <td className="px-6 py-3 text-sm text-gray-500">
-                  {emails.get(member.id)}
+                  {accounts.get(member.id)?.email}
                 </td>
                 <td className="px-6 py-3 text-sm text-gray-900">
                   {member.role === "admin" ? "Admin" : "EP"}
                 </td>
                 <td className="px-6 py-3 text-sm text-gray-500">
-                  {member.is_active ? "Active" : "Deactivated"}
+                  {!member.is_active ? "Deactivated" : isPending(member.id) ? "Invited" : "Active"}
                 </td>
                 <td className="px-6 py-3 text-sm text-gray-500">
                   {enrolled.has(member.id) ? "Set up" : "Not set up"}
@@ -86,6 +88,9 @@ export default async function StaffPage({ searchParams }: PageProps<"/admin/staf
                     <span className="text-gray-400">You</span>
                   ) : (
                     <div className="flex justify-end gap-3">
+                      {member.is_active && isPending(member.id) && (
+                        <InviteLinkButton staffId={member.id} name={member.display_name} />
+                      )}
                       {enrolled.has(member.id) && (
                         <ConfirmButton
                           action={resetAuthenticator}
