@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { type ExerciseOption, ExercisePicker } from "@/components/exercise-picker";
-import { Modal, primaryButton } from "@/components/modal";
+import { Modal, primaryButton, secondaryButton } from "@/components/modal";
+import { DragHandle, SortableList } from "@/components/sortable-list";
 import { formatPrescription } from "@/lib/programs";
+import { isGroupable, normaliseGroups, supersetStyles } from "@/lib/supersets";
 import { saveProgram } from "../actions";
 
 export type EditorRow = {
@@ -44,27 +46,60 @@ export function ProgramEditor({
 }) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
-  const [rows, setRows] = useState(initialRows);
+  const [rows, setRowsRaw] = useState(initialRows);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState<{ error?: string; success?: string }>(
     notice ? { success: notice } : {},
   );
   const [pending, startTransition] = useTransition();
 
+  // Every change keeps supersets valid: adjacent, 2+ rows, numbered in order.
+  const setRows = (change: (current: EditorRow[]) => EditorRow[]) =>
+    setRowsRaw((current) => normaliseGroups(change(current)));
+
   const dirty =
     name !== initialName || JSON.stringify(rows) !== JSON.stringify(initialRows);
+  const selectedIndexes = rows
+    .map((row, index) => (selected.has(row.uid) ? index : -1))
+    .filter((index) => index >= 0);
+  const styles = supersetStyles(rows.map((row) => row.supersetGroup));
 
   const update = (uid: string, field: keyof EditorRow, value: string) =>
     setRows((current) =>
       current.map((row) => (row.uid === uid ? { ...row, [field]: value } : row)),
     );
 
-  const move = (index: number, offset: number) =>
+  const move = (from: number, to: number) =>
     setRows((current) => {
       const next = [...current];
-      const [row] = next.splice(index, 1);
-      next.splice(index + offset, 0, row);
+      const [row] = next.splice(from, 1);
+      next.splice(to, 0, row);
       return next;
     });
+
+  const toggle = (uid: string) =>
+    setSelected((current) => {
+      const next = new Set(current);
+      if (!next.delete(uid)) next.add(uid);
+      return next;
+    });
+
+  const group = () => {
+    setRows((current) => {
+      const id = Math.max(0, ...current.map((row) => row.supersetGroup ?? 0)) + 1;
+      return current.map((row) => (selected.has(row.uid) ? { ...row, supersetGroup: id } : row));
+    });
+    setSelected(new Set());
+  };
+
+  const ungroup = () => {
+    setRows((current) =>
+      current.map((row) =>
+        selected.has(row.uid) ? { ...row, supersetGroup: undefined } : row,
+      ),
+    );
+    setSelected(new Set());
+  };
 
   const save = () =>
     startTransition(async () => {
@@ -131,133 +166,122 @@ export function ProgramEditor({
             />
           )}
         </Modal>
+        <button
+          type="button"
+          className={`${secondaryButton} disabled:opacity-40`}
+          disabled={!isGroupable(selectedIndexes)}
+          onClick={group}
+        >
+          Group as superset
+        </button>
+        <button
+          type="button"
+          className={`${secondaryButton} disabled:opacity-40`}
+          disabled={!selectedIndexes.some((index) => rows[index].supersetGroup)}
+          onClick={ungroup}
+        >
+          Ungroup
+        </button>
       </div>
+      <p className="mb-4 text-xs text-gray-500">
+        Tick 2 or more rows next to each other to group them as a superset. Drag the handle,
+        or focus it and use Space and the arrow keys, to reorder.
+      </p>
 
-      <div className="space-y-3">
-        {rows.map((row, index) => (
-          <div
-            key={row.uid}
-            data-testid="program-row"
-            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-          >
-            <div className="flex flex-wrap items-center gap-4">
-              <span className="w-6 text-sm font-medium text-gray-500">{index + 1}</span>
-              <div className="min-w-40 flex-1">
-                <h2 className="text-sm font-semibold text-gray-900">{row.exerciseName}</h2>
-                <p className="text-xs text-gray-500">
-                  {formatPrescription(
-                    Number(row.sets) || 0,
-                    row.reps,
-                    row.rmPercent === "" ? null : Number(row.rmPercent) / 100,
-                  )}
-                </p>
+      <SortableList items={rows} getId={(row) => row.uid} onMove={move}>
+        {(row, index, handle) => {
+          const style = row.supersetGroup ? styles.get(row.supersetGroup) : undefined;
+          return (
+            <div
+              data-testid="program-row"
+              data-superset={row.supersetGroup ?? ""}
+              className={`rounded-xl border border-gray-200 p-4 shadow-sm ${
+                style ? `border-l-8 ${style.band} ${style.fill}` : "bg-white"
+              }`}
+            >
+              <div className="flex flex-wrap items-center gap-4">
+                <DragHandle label={`Drag ${row.exerciseName} to reorder`} handle={handle} />
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${row.exerciseName}`}
+                  checked={selected.has(row.uid)}
+                  onChange={() => toggle(row.uid)}
+                />
+                <span className="w-6 text-sm font-medium text-gray-500">{index + 1}</span>
+                <div className="min-w-40 flex-1">
+                  <h2 className="text-sm font-semibold text-gray-900">{row.exerciseName}</h2>
+                  <p className="text-xs text-gray-500">
+                    {formatPrescription(
+                      Number(row.sets) || 0,
+                      row.reps,
+                      row.rmPercent === "" ? null : Number(row.rmPercent) / 100,
+                    )}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label>
+                    <span className={smallLabel}>Sets</span>
+                    <input className={smallInput} type="number" min={1} max={20} value={row.sets}
+                      onChange={(event) => update(row.uid, "sets", event.target.value)} />
+                  </label>
+                  <label>
+                    <span className={smallLabel}>Reps</span>
+                    <input
+                      className="w-28 rounded border border-gray-300 px-2 py-1 text-center text-sm"
+                      maxLength={20} value={row.reps}
+                      onChange={(event) => update(row.uid, "reps", event.target.value)} />
+                  </label>
+                  <label>
+                    <span className={smallLabel}>% 1RM</span>
+                    <input className={smallInput} type="number" min={0.1} max={120} step={0.1}
+                      placeholder="—" value={row.rmPercent}
+                      onChange={(event) => update(row.uid, "rmPercent", event.target.value)} />
+                  </label>
+                  <label>
+                    <span className={smallLabel}>Start kg</span>
+                    <input className={smallInput} type="number" min={0} step={0.25}
+                      placeholder="—" value={row.fallbackKg}
+                      onChange={(event) => update(row.uid, "fallbackKg", event.target.value)} />
+                  </label>
+                  <label>
+                    <span className={smallLabel}>Rest (s)</span>
+                    <input className={smallInput} type="number" min={0} step={15}
+                      placeholder="—" value={row.restSeconds}
+                      onChange={(event) => update(row.uid, "restSeconds", event.target.value)} />
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <button type="button" className={iconButton} disabled={index === 0}
+                    aria-label={`Move ${row.exerciseName} up`}
+                    onClick={() => move(index, index - 1)}>↑</button>
+                  <button type="button" className={iconButton} disabled={index === rows.length - 1}
+                    aria-label={`Move ${row.exerciseName} down`}
+                    onClick={() => move(index, index + 1)}>↓</button>
+                  <button type="button" className={iconButton}
+                    aria-label={`Remove ${row.exerciseName}`}
+                    onClick={() =>
+                      setRows((current) => current.filter((other) => other.uid !== row.uid))
+                    }>✕</button>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <label>
-                  <span className={smallLabel}>Sets</span>
-                  <input
-                    className={smallInput}
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={row.sets}
-                    onChange={(event) => update(row.uid, "sets", event.target.value)}
-                  />
-                </label>
-                <label>
-                  <span className={smallLabel}>Reps</span>
-                  <input
-                    className="w-28 rounded border border-gray-300 px-2 py-1 text-center text-sm"
-                    maxLength={20}
-                    value={row.reps}
-                    onChange={(event) => update(row.uid, "reps", event.target.value)}
-                  />
-                </label>
-                <label>
-                  <span className={smallLabel}>% 1RM</span>
-                  <input
-                    className={smallInput}
-                    type="number"
-                    min={0.1}
-                    max={120}
-                    step={0.1}
-                    placeholder="—"
-                    value={row.rmPercent}
-                    onChange={(event) => update(row.uid, "rmPercent", event.target.value)}
-                  />
-                </label>
-                <label>
-                  <span className={smallLabel}>Start kg</span>
-                  <input
-                    className={smallInput}
-                    type="number"
-                    min={0}
-                    step={0.25}
-                    placeholder="—"
-                    value={row.fallbackKg}
-                    onChange={(event) => update(row.uid, "fallbackKg", event.target.value)}
-                  />
-                </label>
-                <label>
-                  <span className={smallLabel}>Rest (s)</span>
-                  <input
-                    className={smallInput}
-                    type="number"
-                    min={0}
-                    step={15}
-                    placeholder="—"
-                    value={row.restSeconds}
-                    onChange={(event) => update(row.uid, "restSeconds", event.target.value)}
-                  />
-                </label>
-              </div>
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  className={iconButton}
-                  disabled={index === 0}
-                  aria-label={`Move ${row.exerciseName} up`}
-                  onClick={() => move(index, -1)}
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  className={iconButton}
-                  disabled={index === rows.length - 1}
-                  aria-label={`Move ${row.exerciseName} down`}
-                  onClick={() => move(index, 1)}
-                >
-                  ↓
-                </button>
-                <button
-                  type="button"
-                  className={iconButton}
-                  aria-label={`Remove ${row.exerciseName}`}
-                  onClick={() =>
-                    setRows((current) => current.filter((other) => other.uid !== row.uid))
-                  }
-                >
-                  ✕
-                </button>
-              </div>
+              <input
+                aria-label={`Notes for ${row.exerciseName}`}
+                placeholder="Notes"
+                maxLength={200}
+                value={row.notes}
+                onChange={(event) => update(row.uid, "notes", event.target.value)}
+                className="mt-3 w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm sm:ml-16 sm:w-[calc(100%-4rem)]"
+              />
             </div>
-            <input
-              aria-label={`Notes for ${row.exerciseName}`}
-              placeholder="Notes"
-              maxLength={200}
-              value={row.notes}
-              onChange={(event) => update(row.uid, "notes", event.target.value)}
-              className="mt-3 w-full rounded border border-gray-300 px-2 py-1 text-sm sm:ml-10 sm:w-[calc(100%-2.5rem)]"
-            />
-          </div>
-        ))}
-        {rows.length === 0 && (
-          <div className="rounded-xl border-2 border-dashed border-gray-300 bg-white p-12 text-center text-gray-500">
-            No exercises yet. Use + Add Exercise.
-          </div>
-        )}
-      </div>
+          );
+        }}
+      </SortableList>
+
+      {rows.length === 0 && (
+        <div className="rounded-xl border-2 border-dashed border-gray-300 bg-white p-12 text-center text-gray-500">
+          No exercises yet. Use + Add Exercise.
+        </div>
+      )}
 
       <div className="sticky bottom-0 mt-6 flex flex-wrap items-center gap-4 border-t border-gray-200 bg-gray-50 py-4">
         <button

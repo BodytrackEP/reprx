@@ -34,6 +34,7 @@ type ProgramItem = {
   reps: string;
   rm_percentage?: number | null;
   fallback_weight_kg?: number | null;
+  superset_group?: number | null;
 };
 
 /** Creates a library program and assigns it to a class from today. */

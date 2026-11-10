@@ -11,6 +11,7 @@ import { formatTime, todayIso } from "@/lib/time";
 import { idSchema } from "@/lib/validation/catalog";
 import { loadClassProgram } from "@/lib/class-program";
 import { formatPrescription } from "@/lib/programs";
+import { supersetStyles } from "@/lib/supersets";
 import { PrintButton } from "./print-button";
 
 export default async function SessionViewPage({
@@ -40,6 +41,8 @@ export default async function SessionViewPage({
   if (error) throw new Error("Could not load weights.");
 
   const exercises = program.items.filter((item) => !item.is_removed);
+  const supersets = supersetStyles(exercises.map((item) => item.superset_group));
+  const fillOf = (group: number | null) => (group ? (supersets.get(group)?.fill ?? "") : "");
   const members = (memberRows ?? [])
     .map((row) => row.clients)
     .filter((client) => !client.deleted_at)
@@ -104,7 +107,8 @@ export default async function SessionViewPage({
                   <th
                     key={row.id}
                     scope="col"
-                    className="min-w-44 px-3 py-3 text-center font-semibold text-gray-700 print:min-w-0 print:break-words print:px-1 print:py-0.5 print:text-[7pt] print:leading-tight"
+                    data-superset={row.superset_group ?? ""}
+                    className={`${fillOf(row.superset_group)} min-w-44 px-3 py-3 text-center font-semibold text-gray-700 print:min-w-0 print:break-words print:px-1 print:py-0.5 print:text-[7pt] print:leading-tight`}
                   >
                     {row.exercises.name}
                     <span className="block font-normal text-gray-600">
@@ -141,7 +145,7 @@ export default async function SessionViewPage({
                           className={`p-0 text-center ${
                             isOverride
                               ? "bg-amber-50 ring-2 ring-inset ring-amber-400 print:bg-transparent"
-                              : ""
+                              : fillOf(row.superset_group)
                           }`}
                         >
                           <OverrideButton

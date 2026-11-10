@@ -224,4 +224,35 @@ from (
 ) as o
 on conflict do nothing;
 
+
+-- Supersets: Monday AM Strength and Thursday Chronic Disease pair their 2nd and 3rd
+-- exercises. Monday's program is shared with Thursday PM Strength, whose 3rd row is
+-- customised, so that class keeps the row as it is and gets no superset there.
+do $$
+declare
+  v_program bigint;
+  v_class bigint;
+begin
+  foreach v_class in array array[900001, 900004]::bigint[] loop
+  select program_id into v_program
+  from public.class_program_assignments where class_id = v_class order by start_date limit 1;
+
+  if not exists (
+    select 1 from public.program_version_items i
+    join public.library_programs p on p.current_version_id = i.version_id
+    where p.id = v_program and i.superset_group is not null
+  ) then
+    perform public.save_program_version(v_program, null, (
+      select jsonb_agg(
+        to_jsonb(i) - array['id', 'version_id', 'position', 'created_at', 'superset_group']
+          || jsonb_build_object('superset_group', case when i.position in (2, 3) then 1 end)
+        order by i.position)
+      from public.program_version_items i
+      join public.library_programs p on p.current_version_id = i.version_id
+      where p.id = v_program));
+  end if;
+  end loop;
+end;
+$$;
+
 commit;

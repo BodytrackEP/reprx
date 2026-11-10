@@ -170,3 +170,28 @@ export async function addClassItem(classId: number, assignmentId: number, exerci
   refresh(cls);
   return {};
 }
+
+export async function moveClassItemTo(classId: number, id: number, index: number) {
+  const position = z.number().int().positive().parse(index);
+  return runRowRpc(
+    [classId, id],
+    (supabase, itemId) =>
+      supabase.rpc("move_class_item_to", { p_item_id: itemId, p_index: position }),
+    "Could not move the row.",
+  );
+}
+
+export async function setClassSuperset(classId: number, ids: number[], grouped: boolean) {
+  await requireStaff();
+  const cls = idSchema.parse(classId);
+  const itemIds = z.array(idSchema).min(1).max(60).parse(ids);
+
+  const supabase = await createClient();
+  const { error } = grouped
+    ? await supabase.rpc("set_class_superset", { p_item_ids: itemIds })
+    : await supabase.rpc("clear_class_superset", { p_item_ids: itemIds });
+  if (error) return { error: dbErrorMessage(error, "Could not change the superset.") };
+
+  refresh(cls);
+  return {};
+}

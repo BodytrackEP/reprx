@@ -14,4 +14,10 @@
   body {
     background: white;
   }
+
+  /* Superset colour blocks must survive printing. */
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
 }

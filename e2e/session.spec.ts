@@ -32,6 +32,8 @@ async function arrangeClass(staffId: string) {
       // The last is bodyweight; the one before has a starting weight.
       rm_percentage: i === 11 ? null : 0.7,
       fallback_weight_kg: i === 10 ? 20 : null,
+      // The second and third make a superset, so print covers colour blocks too.
+      superset_group: i === 1 || i === 2 ? 1 : null,
     })),
   );
 

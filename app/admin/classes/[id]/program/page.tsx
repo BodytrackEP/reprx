@@ -5,7 +5,7 @@ import { loadClassProgram } from "@/lib/class-program";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/time";
 import { idSchema } from "@/lib/validation/catalog";
-import { AddClassExercise, ClassItemRow, RemovedRow } from "./class-item-row";
+import { AddClassExercise, ClassItemList, RemovedRow } from "./class-item-row";
 
 export default async function ClassProgramPage({
   params,
@@ -72,15 +72,10 @@ export default async function ClassProgramPage({
             library. Library updates no longer change that row until you reset it.
           </p>
 
-          <div className="space-y-3">
-            {visible.map((row, index) => (
-              <ClassItemRow key={row.id} classId={classId} row={row} position={index + 1}
-                isFirst={index === 0} isLast={index === visible.length - 1} />
-            ))}
-            {visible.length === 0 && (
-              <p className="text-gray-500">No exercises. Add one, or edit the library program.</p>
-            )}
-          </div>
+          <ClassItemList classId={classId} rows={visible} />
+          {visible.length === 0 && (
+            <p className="text-gray-500">No exercises. Add one, or edit the library program.</p>
+          )}
 
           {removed.length > 0 && (
             <section className="mt-8">

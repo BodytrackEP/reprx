@@ -3,13 +3,17 @@
 import { useActionState, useState, useTransition } from "react";
 import { type ExerciseOption, ExercisePicker } from "@/components/exercise-picker";
 import { SubmitButton } from "@/components/form";
-import { Modal, primaryButton } from "@/components/modal";
+import { Modal, primaryButton, secondaryButton } from "@/components/modal";
+import { type DragHandleProps, DragHandle, SortableList } from "@/components/sortable-list";
 import { formatPrescription, toPercent } from "@/lib/programs";
+import { isGroupable, type SupersetStyle, supersetStyles } from "@/lib/supersets";
 import {
   addClassItem,
   moveClassItem,
+  moveClassItemTo,
   removeClassItem,
   resetClassItem,
+  setClassSuperset,
   updateClassItem,
 } from "./actions";
 
@@ -21,6 +25,7 @@ type Row = {
   fallback_weight_kg: number | null;
   rest_seconds: number | null;
   notes: string | null;
+  superset_group: number | null;
   is_customised: boolean;
   source_version_id: number | null;
   exercises: { name: string; muscle_group: string | null; equipment: string | null };
@@ -50,12 +55,20 @@ export function ClassItemRow({
   position,
   isFirst,
   isLast,
+  handle,
+  selected,
+  onToggle,
+  superset,
 }: {
   classId: number;
   row: Row;
   position: number;
   isFirst: boolean;
   isLast: boolean;
+  handle: DragHandleProps;
+  selected: boolean;
+  onToggle: () => void;
+  superset?: SupersetStyle;
 }) {
   const [state, action] = useActionState(updateClassItem, {});
   const { error, pending, run } = useRowAction();
@@ -66,13 +79,16 @@ export function ClassItemRow({
     <form
       action={action}
       data-testid="class-row"
-      className={`rounded-xl border bg-white p-4 shadow-sm ${
+      data-superset={row.superset_group ?? ""}
+      className={`rounded-xl border p-4 shadow-sm ${
         row.is_customised ? "border-indigo-300" : "border-gray-200"
-      }`}
+      } ${superset ? `border-l-8 ${superset.band} ${superset.fill}` : "bg-white"}`}
     >
       <input type="hidden" name="id" value={row.id} />
       <input type="hidden" name="classId" value={classId} />
       <div className="flex flex-wrap items-center gap-4">
+        <DragHandle label={`Drag ${name} to reorder`} handle={handle} />
+        <input type="checkbox" aria-label={`Select ${name}`} checked={selected} onChange={onToggle} />
         <span className="w-6 text-sm font-medium text-gray-500">{position}</span>
         <div className="min-w-40 flex-1">
           <h2 className="text-sm font-semibold text-gray-900">{name}</h2>
@@ -194,5 +210,63 @@ export function AddClassExercise({
         </>
       )}
     </Modal>
+  );
+}
+
+export function ClassItemList({ classId, rows }: { classId: number; rows: Row[] }) {
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const { error, pending, run } = useRowAction();
+  const styles = supersetStyles(rows.map((row) => row.superset_group));
+  const indexes = rows
+    .map((row, index) => (selected.has(row.id) ? index : -1))
+    .filter((index) => index >= 0);
+
+  const regroup = (grouped: boolean) =>
+    run(async () => {
+      const result = await setClassSuperset(classId, [...selected], grouped);
+      if (!result.error) setSelected(new Set());
+      return result;
+    });
+
+  return (
+    <>
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <button type="button" className={`${secondaryButton} disabled:opacity-40`}
+          disabled={pending || !isGroupable(indexes)} onClick={() => regroup(true)}>
+          Group as superset
+        </button>
+        <button type="button" className={`${secondaryButton} disabled:opacity-40`}
+          disabled={pending || !indexes.some((index) => rows[index].superset_group)}
+          onClick={() => regroup(false)}>
+          Ungroup
+        </button>
+        {error && <span role="alert" className="text-sm text-red-700">{error}</span>}
+      </div>
+      <SortableList
+        items={rows}
+        getId={(row) => String(row.id)}
+        onMove={(from, to) => run(() => moveClassItemTo(classId, rows[from].id, to + 1))}
+      >
+        {(row, index, handle) => (
+          <ClassItemRow
+            classId={classId}
+            row={row}
+            position={index + 1}
+            isFirst={index === 0}
+            isLast={index === rows.length - 1}
+            handle={handle}
+            selected={selected.has(row.id)}
+            onToggle={() =>
+              setSelected((current) => {
+                const next = new Set(current);
+                if (!next.delete(row.id)) next.add(row.id);
+                return next;
+              })
+            }
+            superset={row.superset_group ? styles.get(row.superset_group) : undefined}
+          />
+        )}
+      </SortableList>
+    </>
   );
 }

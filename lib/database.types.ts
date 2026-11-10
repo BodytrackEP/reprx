@@ -502,6 +502,9 @@ isOneToOne: false
 "assign_program":
 { Args: { "p_class_id": number,"p_end_date"?: string,"p_program_id": number,"p_start_date": string }; Returns: number
                            },
+"clear_class_superset":
+{ Args: { "p_item_ids": (number)[] }; Returns: undefined
+                           },
 "create_program":
 { Args: { "p_name": string }; Returns: number
                            },
@@ -530,11 +533,17 @@ isOneToOne: false
 "move_class_item":
 { Args: { "p_direction": string,"p_item_id": number }; Returns: undefined
                            },
+"move_class_item_to":
+{ Args: { "p_index": number,"p_item_id": number }; Returns: undefined
+                           },
 "move_client":
 { Args: { "p_allow_over_capacity"?: boolean,"p_client_id": number,"p_from_class": number,"p_to_class": number }; Returns: undefined
                            },
 "move_clients":
 { Args: { "p_allow_over_capacity"?: boolean,"p_client_ids": (number)[],"p_from_class": number,"p_to_class": number }; Returns: undefined
+                           },
+"normalise_class_supersets":
+{ Args: { "p_assignment_id": number }; Returns: undefined
                            },
 "practice_today":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -543,6 +552,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: Json
                            },
 "push_version_to_assignment":
+{ Args: { "p_assignment_id": number,"p_version_id": number }; Returns: Json
+                           },
+"push_version_to_assignment_rows":
 { Args: { "p_assignment_id": number,"p_version_id": number }; Returns: Json
                            },
 "record_authenticator_reset":
@@ -560,11 +572,17 @@ isOneToOne: false
 "reset_class_item":
 { Args: { "p_item_id": number }; Returns: undefined
                            },
+"reset_class_item_row":
+{ Args: { "p_item_id": number }; Returns: undefined
+                           },
 "round_to_increment":
 { Args: { "p_increment": number,"p_kg": number }; Returns: number
                            },
 "save_program_version":
 { Args: { "p_items": Json,"p_name": string,"p_program_id": number }; Returns: Json
+                           },
+"set_class_superset":
+{ Args: { "p_item_ids": (number)[] }; Returns: undefined
                            },
 "set_client_classes":
 { Args: { "p_allow_over_capacity"?: boolean,"p_class_ids": (number)[],"p_client_id": number }; Returns: undefined
