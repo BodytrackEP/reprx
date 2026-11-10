@@ -16,14 +16,14 @@ export async function setOverride(_: FormState, formData: FormData): Promise<For
   const parsed = overrideSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const { clientId, exerciseId, weightKg, reason, reviewDate } = parsed.data;
+  const { clientId, exerciseId, weightKg, note, reviewDate } = parsed.data;
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_override", {
     p_client_id: clientId,
     p_exercise_id: exerciseId,
     p_weight_kg: weightKg,
-    p_reason: reason,
+    p_note: note,
     p_review_date: reviewDate,
   });
   if (error) return { error: dbErrorMessage(error, "Could not save the override.") };

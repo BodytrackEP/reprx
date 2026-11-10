@@ -152,7 +152,7 @@ export default async function SessionViewPage({
                             ariaLabel={`Override ${row.exercises.name} for ${name}`}
                             buttonClassName="h-full w-full px-3 py-3 hover:ring-2 hover:ring-inset hover:ring-indigo-300 print:px-0 print:py-0.5"
                             label={
-                              <span title={weight.override_reason ?? undefined}>
+                              <span>
                                 <WeightDisplay
                                   weight={weight}
                                   today={today}
@@ -167,7 +167,7 @@ export default async function SessionViewPage({
                               exerciseId: row.exercise_id,
                               exerciseName: row.exercises.name,
                               overrideKg: weight.override_kg,
-                              reason: weight.override_reason,
+                              note: weight.override_note,
                               reviewDate: weight.override_review_date,
                               calculatedKg: weight.calculated_kg,
                             }}
@@ -184,7 +184,9 @@ export default async function SessionViewPage({
       )}
 
       <p className="mt-4 text-gray-600 print:hidden">
-        Select a weight to set an override. Amber means an EP override.
+        Select a weight to adjust it for that client. Amber weights are EP overrides; a note
+        describes the exercise change and follows the client to every class with that
+        exercise.
       </p>
     </div>
   );

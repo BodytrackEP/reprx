@@ -19,7 +19,7 @@ export default async function DashboardPage() {
       .order("start_time"),
     supabase
       .from("weight_overrides")
-      .select("id, client_id, review_date, reason, clients(first_name, last_name), exercises(name)")
+      .select("id, client_id, review_date, note, clients(first_name, last_name), exercises(name)")
       .is("ended_at", null)
       .lte("review_date", todayIso())
       .order("review_date"),
@@ -89,7 +89,7 @@ export default async function DashboardPage() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Client</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Exercise</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Reason</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Note</th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Review date</th>
                 </tr>
               </thead>
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
                       </Link>
                     </td>
                     <td className="px-6 py-3 text-sm text-gray-900">{review.exercises.name}</td>
-                    <td className="px-6 py-3 text-sm text-gray-500">{review.reason}</td>
+                    <td className="px-6 py-3 text-sm text-gray-500">{review.note ?? "—"}</td>
                     <td className="px-6 py-3 text-sm text-gray-500">
                       {review.review_date && formatDate(review.review_date)}
                     </td>

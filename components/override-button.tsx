@@ -11,7 +11,7 @@ export type OverrideTarget = {
   exerciseId: number;
   exerciseName: string;
   overrideKg: number | null;
-  reason: string | null;
+  note: string | null;
   reviewDate: string | null;
   calculatedKg: number | null;
 };
@@ -35,11 +35,7 @@ function OverrideForm({ target, onDone }: { target: OverrideTarget; onDone: () =
         Applies to {target.exerciseName} in every class {target.clientName} attends.
         {target.calculatedKg !== null && ` Calculated weight: ${target.calculatedKg} kg.`}
       </p>
-      {active && target.reason && (
-        <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-          Current reason: {target.reason}
-        </p>
-      )}
+
       <Field
         label="Override weight (kg)"
         name="weightKg"
@@ -50,13 +46,11 @@ function OverrideForm({ target, onDone }: { target: OverrideTarget; onDone: () =
         required
       />
       <Field
-        label="Reason"
-        name="reason"
-        minLength={3}
+        label="Note (optional)"
+        name="note"
         maxLength={200}
-        defaultValue={target.reason ?? ""}
-        hint="Brief training reason only (e.g. 'L shoulder rehab – reduce pressing'). Clinical notes belong in Cliniko."
-        required
+        defaultValue={target.note ?? ""}
+        hint="Describe the exercise change only (e.g. 'Trap bar instead'). No clinical details: those belong in Cliniko."
       />
       <Field
         label="Review date (optional)"

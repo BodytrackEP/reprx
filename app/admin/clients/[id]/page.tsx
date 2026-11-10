@@ -43,6 +43,7 @@ export default async function ClientDetailPage({
     { data: testRows },
     { data: overrideRows },
     { data: history },
+    { data: liveOverrides },
   ] = await Promise.all([
     supabase
       .from("clients")
@@ -63,11 +64,16 @@ export default async function ClientDetailPage({
     supabase
       .from("weight_overrides")
       .select(
-        "id, exercise_id, override_weight_kg, reason, review_date, set_at, ended_at, exercises(name)",
+        "id, exercise_id, override_weight_kg, note, review_date, set_at, ended_at, exercises(name)",
       )
       .eq("client_id", clientId)
       .order("set_at", { ascending: false }),
     supabase.rpc("client_program_history", { p_client_id: clientId }),
+    supabase
+      .from("client_overrides_v")
+      .select("*")
+      .eq("client_id", clientId)
+      .order("exercise_name"),
   ]);
   if (!client) notFound();
 
@@ -76,7 +82,10 @@ export default async function ClientDetailPage({
   const today = todayIso();
   const tests = testRows ?? [];
   const overrides = overrideRows ?? [];
-  const activeOverrides = overrides.filter((override) => !override.ended_at);
+  // Dormant overrides are kept but not shown in sessions: the exercise isn't in any of the
+  // client's current programs. They apply again automatically if it returns.
+  const activeOverrides = (liveOverrides ?? []).filter((override) => !override.is_dormant);
+  const dormantOverrides = (liveOverrides ?? []).filter((override) => override.is_dormant);
   const summary = summariseRmTests(
     tests.map((test) => ({ ...test, exercise_name: test.exercises.name })),
   );
@@ -207,13 +216,15 @@ export default async function ClientDetailPage({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-sm font-medium text-gray-900">
-                      {override.exercises.name}
+                      {override.exercise_name}
                     </h3>
                     <span className="font-semibold text-amber-800">
                       {override.override_weight_kg} kg
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-gray-600">{override.reason}</p>
+                  {override.note && (
+                    <p className="mt-1 text-sm text-gray-600">{override.note}</p>
+                  )}
                   {override.review_date && (
                     <p
                       className={`mt-1 text-xs ${
@@ -229,14 +240,14 @@ export default async function ClientDetailPage({
                   <div className="mt-2">
                     <OverrideButton
                       label="Change override"
-                      ariaLabel={`Change override for ${override.exercises.name}`}
+                      ariaLabel={`Change override for ${override.exercise_name}`}
                       target={{
                         clientId,
                         clientName: name,
-                        exerciseId: override.exercise_id,
-                        exerciseName: override.exercises.name,
+                        exerciseId: override.exercise_id!,
+                        exerciseName: override.exercise_name!,
                         overrideKg: override.override_weight_kg,
-                        reason: override.reason,
+                        note: override.note,
                         reviewDate: override.review_date,
                         calculatedKg: null,
                       }}
@@ -247,6 +258,28 @@ export default async function ClientDetailPage({
             </div>
           ) : (
             <p className="text-sm text-gray-500">No active overrides.</p>
+          )}
+          {dormantOverrides.length > 0 && (
+            <div className="mt-4">
+              <h3 className="mb-2 text-sm font-semibold text-gray-700">
+                Dormant ({dormantOverrides.length})
+              </h3>
+              <p className="mb-2 text-xs text-gray-500">
+                Kept but not shown in sessions, because the exercise isn&apos;t in any of this
+                client&apos;s current programs. It applies again if the exercise returns.
+              </p>
+              <ul className="divide-y divide-gray-200 rounded-xl border border-gray-200 bg-white">
+                {dormantOverrides.map((override) => (
+                  <li key={override.id} data-testid="dormant-override"
+                    className="flex justify-between gap-4 px-4 py-2 text-sm">
+                    <span className="text-gray-900">{override.exercise_name}</span>
+                    <span className="text-gray-500">
+                      {override.override_weight_kg} kg{override.note && ` · ${override.note}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </section>
 
@@ -336,7 +369,7 @@ export default async function ClientDetailPage({
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Exercise</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Weight</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Reason</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Note</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Set</th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Ended</th>
                   </tr>
@@ -346,7 +379,7 @@ export default async function ClientDetailPage({
                     <tr key={override.id}>
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{override.exercises.name}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{override.override_weight_kg} kg</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{override.reason}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{override.note ?? "—"}</td>
                       <td className="px-4 py-3 text-sm text-gray-500">{formatDate(override.set_at)}</td>
                       <td className="px-4 py-3 text-sm text-gray-500">
                         {override.ended_at ? formatDate(override.ended_at) : "Active"}

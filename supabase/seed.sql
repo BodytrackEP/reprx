@@ -211,7 +211,7 @@ on conflict do nothing;
 
 -- Five active overrides. The first two are past their review date.
 insert into public.weight_overrides
-  (id, client_id, exercise_id, override_weight_kg, reason, review_date, set_by)
+  (id, client_id, exercise_id, override_weight_kg, note, review_date, set_by)
 overriding system value
 select
   900000 + o.n,
@@ -219,11 +219,11 @@ select
   o.exercise_id,
   10 + o.n * 2.5,
   (array[
-    'L shoulder rehab - reduce pressing',
-    'R knee rehab - limit depth',
-    'Lower back - reduced axial load',
-    'Fatigue - reduced volume',
-    'Return from illness - build up'
+    'Trap bar instead',
+    'Box squat to 45 cm',
+    'Seated instead of standing',
+    'Single arm only',
+    null
   ])[o.n],
   case when o.n <= 2 then current_date - 7
        when o.n = 3 then current_date + 30 end,
@@ -270,5 +270,29 @@ begin
   end loop;
 end;
 $$;
+
+
+-- A dormant override: Test Client 01 has one for an exercise none of their current programs
+-- use. It's kept, not shown in sessions, and applies again if the exercise returns.
+insert into public.weight_overrides
+  (id, client_id, exercise_id, override_weight_kg, note, set_by)
+overriding system value
+select 900006, 900001, e.id, 15, 'Machine instead of free weight',
+       '00000000-0000-0000-0000-000000000900'
+from public.exercises e
+where e.id between 900001 and 900020
+  and not exists (
+    select 1
+    from public.class_members m
+    join public.class_program_assignments a
+      on a.class_id = m.class_id
+     and public.practice_today() between a.start_date and coalesce(a.end_date, 'infinity'::date)
+    join public.class_program_items i
+      on i.assignment_id = a.id and not i.is_removed and i.exercise_id = e.id
+    where m.client_id = 900001
+  )
+order by e.id
+limit 1
+on conflict do nothing;
 
 commit;

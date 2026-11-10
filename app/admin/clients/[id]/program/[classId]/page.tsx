@@ -103,9 +103,7 @@ export default async function ClientProgramPage({
                       Latest 1RM: {row.latest_1rm_kg} kg ({formatDate(row.latest_test_date)})
                     </p>
                   )}
-                  {hasOverride && row.override_reason && (
-                    <p className="mt-2 text-xs text-amber-800">{row.override_reason}</p>
-                  )}
+
                 </div>
                 <div className="min-w-24 text-right">
                   <WeightDisplay
@@ -125,7 +123,7 @@ export default async function ClientProgramPage({
                         exerciseId: row.exercise_id,
                         exerciseName,
                         overrideKg: row.override_kg,
-                        reason: row.override_reason,
+                        note: row.override_note,
                         reviewDate: row.override_review_date,
                         calculatedKg: row.calculated_kg,
                       }}
@@ -151,8 +149,9 @@ export default async function ClientProgramPage({
 
       {rows.length > 0 && (
         <p className="mt-6 text-xs text-gray-500">
-          Weights are calculated from the latest RM test. An amber border means an EP
-          override, which applies in every class with that exercise.
+          Weights are calculated from the latest RM test. Amber means an EP override, and any
+          note describes the exercise change. Overrides follow the client to every class with
+          that exercise.
         </p>
       )}
     </div>

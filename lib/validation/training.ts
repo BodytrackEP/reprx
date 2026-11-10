@@ -31,11 +31,10 @@ export const overrideSchema = z.object({
   clientId: idSchema,
   exerciseId: idSchema,
   weightKg: z.coerce.number().min(0, "Weight can't be negative.").max(9999.99),
-  reason: z
-    .string()
-    .trim()
-    .min(3, "Give a short training reason.")
-    .max(200, "Reasons are limited to 200 characters."),
+  note: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().trim().max(200, "Notes are limited to 200 characters.").optional(),
+  ),
   reviewDate: z.preprocess(
     (value) => (value === "" ? undefined : value),
     isoDate.optional(),

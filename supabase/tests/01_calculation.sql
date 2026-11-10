@@ -72,7 +72,7 @@ select lives_ok(
   'set_override succeeds');
 
 select results_eq(
-  $$ select effective_kg, weight_source, override_reason, calculated_kg
+  $$ select effective_kg, weight_source, override_note, calculated_kg
      from public.effective_weights(3001) where client_id = 1001 and exercise_id = 2001 $$,
   $$ values (25.00::numeric, 'override'::text, 'L shoulder rehab'::text, 40.0::numeric) $$,
   'an override beats the calculated weight');

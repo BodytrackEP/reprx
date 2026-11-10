@@ -475,14 +475,14 @@ isOneToOne: false
                   ]
                 },"weight_overrides": {
                   Row: {
-                    "client_id": number,"created_at": string,"ended_at": string | null,"ended_by": string | null,"exercise_id": number,"id": number,"override_weight_kg": number,"reason": string,"review_date": string | null,"set_at": string,"set_by": string,"updated_at": string
+                    "client_id": number,"created_at": string,"ended_at": string | null,"ended_by": string | null,"exercise_id": number,"id": number,"note": string | null,"override_weight_kg": number,"reason": string | null,"review_date": string | null,"set_at": string,"set_by": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "client_id": number,"created_at"?: string,"ended_at"?: string | null,"ended_by"?: string | null,"exercise_id": number,"id"?: never,"override_weight_kg": number,"reason": string,"review_date"?: string | null,"set_at"?: string,"set_by"?: string,"updated_at"?: string
+                    "client_id": number,"created_at"?: string,"ended_at"?: string | null,"ended_by"?: string | null,"exercise_id": number,"id"?: never,"note"?: string | null,"override_weight_kg": number,"reason"?: string | null,"review_date"?: string | null,"set_at"?: string,"set_by"?: string,"updated_at"?: string
                   }
                   Update: {
-                    "client_id"?: number,"created_at"?: string,"ended_at"?: string | null,"ended_by"?: string | null,"exercise_id"?: number,"id"?: never,"override_weight_kg"?: number,"reason"?: string,"review_date"?: string | null,"set_at"?: string,"set_by"?: string,"updated_at"?: string
+                    "client_id"?: number,"created_at"?: string,"ended_at"?: string | null,"ended_by"?: string | null,"exercise_id"?: number,"id"?: never,"note"?: string | null,"override_weight_kg"?: number,"reason"?: string | null,"review_date"?: string | null,"set_at"?: string,"set_by"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -514,9 +514,29 @@ isOneToOne: false
                 }
           }
           Views: {
-            "effective_weights_v": {
+            "client_overrides_v": {
                   Row: {
-                    "assignment_id": number,"calculated_kg": number | null,"class_id": number,"client_id": number,"effective_kg": number | null,"exercise_id": number,"fallback_kg": number | null,"item_id": number,"item_key": string,"latest_1rm_kg": number | null,"latest_test_date": string | null,"order_index": number,"override_kg": number | null,"override_reason": string | null,"override_review_date": string | null,"reps": string,"rm_percentage": number | null,"sets": number,"superset_group": number | null,"weight_source": string | null
+                    "client_id": number,"exercise_id": number,"exercise_name": string,"id": number,"is_dormant": boolean | null,"note": string | null,"override_weight_kg": number,"review_date": string | null,"set_at": string
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "weight_overrides_client_id_fkey"
+      columns: ["client_id"]
+isOneToOne: false
+      referencedRelation: "clients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "weight_overrides_exercise_id_fkey"
+      columns: ["exercise_id"]
+isOneToOne: false
+      referencedRelation: "exercises"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"effective_weights_v": {
+                  Row: {
+                    "assignment_id": number,"calculated_kg": number | null,"class_id": number,"client_id": number,"effective_kg": number | null,"exercise_id": number,"fallback_kg": number | null,"item_id": number,"item_key": string,"latest_1rm_kg": number | null,"latest_test_date": string | null,"order_index": number,"override_kg": number | null,"override_note": string | null,"override_review_date": string | null,"reps": string,"rm_percentage": number | null,"sets": number,"superset_group": number | null,"weight_source": string | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -616,12 +636,12 @@ isOneToOne: false
                            },
 "effective_weights":
 { Args: { "p_class_id": number }; Returns: {
-              "calculated_kg": number,"client_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_reason": string,"override_review_date": string,"reps": string,"rm_percentage": number,"sets": number,"superset_group": number,"weight_source": string
+              "calculated_kg": number,"client_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_note": string,"override_review_date": string,"reps": string,"rm_percentage": number,"sets": number,"superset_group": number,"weight_source": string
             }[]
                            },
 "effective_weights_for_client":
 { Args: { "p_client_id": number }; Returns: {
-              "calculated_kg": number,"class_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_reason": string,"override_review_date": string,"reps": string,"rm_percentage": number,"sets": number,"superset_group": number,"weight_source": string
+              "calculated_kg": number,"class_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_note": string,"override_review_date": string,"reps": string,"rm_percentage": number,"sets": number,"superset_group": number,"weight_source": string
             }[]
                            },
 "end_override":
@@ -712,7 +732,7 @@ isOneToOne: false
 { Args: { "p_allow_over_capacity"?: boolean,"p_class_ids": (number)[],"p_client_id": number }; Returns: undefined
                            },
 "set_override":
-{ Args: { "p_client_id": number,"p_exercise_id": number,"p_reason": string,"p_review_date"?: string,"p_weight_kg": number }; Returns: number
+{ Args: { "p_client_id": number,"p_exercise_id": number,"p_note"?: string,"p_review_date"?: string,"p_weight_kg": number }; Returns: number
                            },
 "set_program_archived":
 { Args: { "p_archived": boolean,"p_program_id": number }; Returns: undefined

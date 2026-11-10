@@ -76,7 +76,7 @@ async function arrangeClass(staffId: string) {
     client_id: clients![0].id,
     exercise_id: exercises![0].id,
     override_weight_kg: 25,
-    reason: "L shoulder rehab",
+    note: "Box squat to 45 cm",
     review_date: "2026-01-01",
     set_by: staffId,
   });
@@ -102,12 +102,10 @@ test("the session view shows every member by every exercise, and takes overrides
     page.getByRole("button", { name: `Override ${exercises[exercise].name} for ${name}` });
 
   await expect(cell(0, overridden)).toContainText("25 kg");
-  await expect(cell(0, overridden)).toContainText("Override");
+  // The full note shows in place of an "Override" label.
+  await expect(cell(0, overridden)).toContainText("Box squat to 45 cm");
+  await expect(cell(0, overridden)).not.toContainText("Override");
   await expect(cell(0, overridden)).toContainText("Review due");
-  await expect(cell(0, overridden).locator("span[title]").first()).toHaveAttribute(
-    "title",
-    "L shoulder rehab",
-  );
 
   await expect(cell(0, other)).toContainText("40 kg");
   await expect(cell(9, other)).toContainText("Not tested");
@@ -126,7 +124,7 @@ test("the session view shows every member by every exercise, and takes overrides
   await cell(0, other).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Override weight (kg)").fill("30");
-  await dialog.getByLabel("Reason").fill("R knee rehab");
+  await dialog.getByLabel("Note (optional)").fill("Seated instead");
   await dialog.getByRole("button", { name: "Set override" }).click();
   await expect(cell(0, other)).toContainText("30 kg");
 });

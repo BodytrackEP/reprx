@@ -3,7 +3,7 @@ export type WeightSource = "override" | "calculated" | "fallback" | "not_tested"
 export type EffectiveWeight = {
   effective_kg: number | null;
   weight_source: string;
-  override_reason: string | null;
+  override_note: string | null;
   override_review_date: string | null;
 };
 
@@ -40,12 +40,11 @@ export function WeightDisplay({
       >
         {weight.effective_kg} kg
       </span>
-      {source === "override" && (
-        <span
-          className={`${labelClassName} block text-amber-800`}
-          title={weight.override_reason ?? undefined}
-        >
-          Override
+      {/* The full note replaces the "Override" label and wraps; with no note, the amber
+          styling alone marks the override. */}
+      {source === "override" && weight.override_note && (
+        <span className={`${labelClassName} block whitespace-normal break-words text-amber-900`}>
+          {weight.override_note}
         </span>
       )}
       {source === "override" && isReviewDue(weight.override_review_date, today) && (

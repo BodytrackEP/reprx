@@ -69,16 +69,18 @@ test("an override follows the client, keeps history and can be ended", async ({ 
   const dialog = page.getByRole("dialog");
   await expect(
     dialog.getByText(
-      "Brief training reason only (e.g. 'L shoulder rehab – reduce pressing'). Clinical notes belong in Cliniko.",
+      "Describe the exercise change only (e.g. 'Trap bar instead'). No clinical details: those belong in Cliniko.",
     ),
   ).toBeVisible();
   await dialog.getByLabel("Override weight (kg)").fill("25");
-  await dialog.getByLabel("Reason").fill("L shoulder rehab");
+  await dialog.getByLabel("Note (optional)").fill("Trap bar instead");
   await dialog.getByLabel("Review date (optional)").fill("2026-01-01");
   await dialog.getByRole("button", { name: "Set override" }).click();
 
   await expect(page.getByText("25 kg", { exact: true })).toBeVisible();
-  await expect(page.getByText("Override", { exact: true })).toBeVisible();
+  // The note replaces the "Override" label.
+  await expect(page.getByText("Trap bar instead", { exact: true })).toBeVisible();
+  await expect(page.getByText("Override", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Review due")).toBeVisible();
 
   // Applies in the other class too, at the same weight.
@@ -88,13 +90,15 @@ test("an override follows the client, keeps history and can be ended", async ({ 
   // Replacing keeps history.
   await openOverride(page, "Change", exercise.name);
   await page.getByRole("dialog").getByLabel("Override weight (kg)").fill("30");
-  await page.getByRole("dialog").getByLabel("Reason").fill("Shoulder improving");
+  // A replacement with no note shows the weight alone.
+  await page.getByRole("dialog").getByLabel("Note (optional)").fill("");
   await page.getByRole("dialog").getByRole("button", { name: "Replace override" }).click();
   await expect(page.getByText("30 kg", { exact: true })).toBeVisible();
+  await expect(page.getByText("Trap bar instead", { exact: true })).toHaveCount(0);
 
   await page.goto(`/admin/clients/${clientId}?tab=overrides`);
-  await expect(page.getByRole("cell", { name: "L shoulder rehab" })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "Shoulder improving" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Trap bar instead" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "—" })).toBeVisible();
 
   // Ending reverts to the calculated weight.
   await page.goto(`/admin/clients/${clientId}/program/${classA}`);
@@ -122,7 +126,7 @@ test("the client page summarises tests, and a due review reaches the dashboard",
     client_id: clientId,
     exercise_id: exercise.id,
     override_weight_kg: 20,
-    reason: "Zz dashboard review",
+    note: "Zz dashboard review",
     review_date: "2026-01-01",
     set_by: staff.id,
   });
@@ -134,4 +138,36 @@ test("the client page summarises tests, and a due review reaches the dashboard",
 
   await page.goto("/admin");
   await expect(page.getByRole("cell", { name: "Zz dashboard review" }).first()).toBeVisible();
+});
+
+test("an override goes dormant when its exercise leaves the program, and returns", async ({
+  page,
+}) => {
+  const staff = await signInFully(page, "ep");
+  const { clientId, exercise, classA, classB } = await arrange(staff.id);
+  await admin.from("weight_overrides").insert({
+    client_id: clientId,
+    exercise_id: exercise.id,
+    override_weight_kg: 20,
+    note: "Trap bar instead",
+    set_by: staff.id,
+  });
+
+  // Remove the exercise from both of the client's classes.
+  for (const classId of [classA, classB]) {
+    await page.goto(`/admin/classes/${classId}/program`);
+    await page.getByRole("button", { name: `Remove ${exercise.name}` }).click();
+    await expect(page.getByText("Removed for this class")).toBeVisible();
+  }
+
+  await page.goto(`/admin/clients/${clientId}`);
+  await expect(page.getByTestId("dormant-override")).toContainText(exercise.name);
+  await expect(page.getByRole("heading", { name: "Active Overrides (0)" })).toBeVisible();
+
+  // Bringing it back into one class makes it active again.
+  await page.goto(`/admin/classes/${classA}/program`);
+  await page.getByRole("button", { name: "Restore from library" }).click();
+  await page.goto(`/admin/clients/${clientId}`);
+  await expect(page.getByRole("heading", { name: "Active Overrides (1)" })).toBeVisible();
+  await expect(page.getByTestId("dormant-override")).toHaveCount(0);
 });
