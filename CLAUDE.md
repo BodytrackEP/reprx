@@ -27,6 +27,8 @@ See [.env.example](.env.example). `SUPABASE_SECRET_KEY` is server-only: import i
 
 Local setup: `pnpm exec supabase start`, then `pnpm env:local` writes `.env.local` from the running stack.
 
+The full routine for building, testing, shipping and deploying (including hosted migrations, order of changes and rollback) is in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
 ## Hosted Supabase project settings
 
 Set these by hand in each hosted project (`config.toml` only covers local):
