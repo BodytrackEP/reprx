@@ -29,3 +29,21 @@ export function formatDate(iso: string) {
   const [year, month, day] = iso.slice(0, 10).split("-");
   return `${day}/${month}/${year}`;
 }
+
+/** YYYY-MM-DD shifted by whole days. */
+export function addDays(iso: string, days: number) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+
+/** 0 = Sunday, matching classes.day_of_week. */
+export function dayOfWeek(iso: string) {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+}
+
+/** The nearest date strictly before (-1) or after (1) `iso` that falls on `weekday`. */
+export function adjacentWeekday(iso: string, weekday: number, direction: -1 | 1) {
+  const step = direction === 1 ? (weekday - dayOfWeek(iso) + 7) % 7 || 7 : -((dayOfWeek(iso) - weekday + 7) % 7 || 7);
+  return addDays(iso, step);
+}

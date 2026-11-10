@@ -1,6 +1,7 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import pg from "pg";
 import { todayIso } from "../lib/time";
 
 export const admin = createClient(
@@ -55,6 +56,20 @@ export async function programForClass(classId: number, items: ProgramItem[]) {
   });
   if (assignError) throw assignError;
   return { id: programId as number, name };
+}
+
+/**
+ * Runs SQL on the local database directly. Only for what the API deliberately can't reach,
+ * such as the scheduled snapshot and lock jobs in the private schema.
+ */
+export async function sql(text: string, values: unknown[] = []) {
+  const client = new pg.Client({ connectionString: process.env.SUPABASE_DB_URL });
+  await client.connect();
+  try {
+    return (await client.query(text, values)).rows;
+  } finally {
+    await client.end();
+  }
 }
 
 /** Records a testing session for a client holding the given results. */

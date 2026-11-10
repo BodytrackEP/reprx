@@ -523,6 +523,88 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"session_occurrences": {
+                  Row: {
+                    "class_id": number,"created_at": string,"id": number,"locked_at": string | null,"session_date": string,"snapshot_at": string | null,"status": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "class_id": number,"created_at"?: string,"id"?: never,"locked_at"?: string | null,"session_date": string,"snapshot_at"?: string | null,"status"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "class_id"?: number,"created_at"?: string,"id"?: never,"locked_at"?: string | null,"session_date"?: string,"snapshot_at"?: string | null,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "session_occurrences_class_id_fkey"
+      columns: ["class_id"]
+isOneToOne: false
+      referencedRelation: "classes"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"session_snapshot_rows": {
+                  Row: {
+                    "calculated_kg": number | null,"client_id": number,"created_at": string,"edited_at": string | null,"edited_by": string | null,"effective_kg": number | null,"exercise_id": number,"exercise_name": string,"id": number,"is_override": boolean,"item_key": string,"occurrence_id": number,"override_note": string | null,"position": number,"program_version_id": number | null,"reps": string,"rm_percentage": number | null,"rm_result_id": number | null,"sets": number,"superset_group": number | null,"updated_at": string,"weight_source": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "calculated_kg"?: number | null,"client_id": number,"created_at"?: string,"edited_at"?: string | null,"edited_by"?: string | null,"effective_kg"?: number | null,"exercise_id": number,"exercise_name": string,"id"?: never,"is_override": boolean,"item_key": string,"occurrence_id": number,"override_note"?: string | null,"position": number,"program_version_id"?: number | null,"reps": string,"rm_percentage"?: number | null,"rm_result_id"?: number | null,"sets": number,"superset_group"?: number | null,"updated_at"?: string,"weight_source": string
+                  }
+                  Update: {
+                    "calculated_kg"?: number | null,"client_id"?: number,"created_at"?: string,"edited_at"?: string | null,"edited_by"?: string | null,"effective_kg"?: number | null,"exercise_id"?: number,"exercise_name"?: string,"id"?: never,"is_override"?: boolean,"item_key"?: string,"occurrence_id"?: number,"override_note"?: string | null,"position"?: number,"program_version_id"?: number | null,"reps"?: string,"rm_percentage"?: number | null,"rm_result_id"?: number | null,"sets"?: number,"superset_group"?: number | null,"updated_at"?: string,"weight_source"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "session_snapshot_rows_client_id_fkey"
+      columns: ["client_id"]
+isOneToOne: false
+      referencedRelation: "clients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "session_snapshot_rows_edited_by_fkey"
+      columns: ["edited_by"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "session_snapshot_rows_exercise_id_fkey"
+      columns: ["exercise_id"]
+isOneToOne: false
+      referencedRelation: "exercises"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "session_snapshot_rows_occurrence_id_fkey"
+      columns: ["occurrence_id"]
+isOneToOne: false
+      referencedRelation: "session_occurrences"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "session_snapshot_rows_program_version_id_fkey"
+      columns: ["program_version_id"]
+isOneToOne: false
+      referencedRelation: "program_versions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "session_snapshot_rows_rm_result_id_fkey"
+      columns: ["rm_result_id"]
+isOneToOne: false
+      referencedRelation: "effective_weights_v"
+      referencedColumns: ["rm_result_id"]
+    },{
+      foreignKeyName: "session_snapshot_rows_rm_result_id_fkey"
+      columns: ["rm_result_id"]
+isOneToOne: false
+      referencedRelation: "rm_results"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "session_snapshot_rows_rm_result_id_fkey"
+      columns: ["rm_result_id"]
+isOneToOne: false
+      referencedRelation: "rm_results_v"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"staff": {
                   Row: {
                     "created_at": string,"display_name": string,"id": string,"is_active": boolean,"role": string,"updated_at": string
@@ -724,9 +806,17 @@ isOneToOne: false
 "duplicate_program":
 { Args: { "p_name": string,"p_program_id": number }; Returns: number
                            },
+"edit_snapshot_row":
+{ Args: { "p_effective_kg": number,"p_note": string,"p_row_id": number }; Returns: undefined
+                           },
 "effective_weights":
 { Args: { "p_class_id": number }; Returns: {
               "calculated_kg": number,"client_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_note": string,"override_review_date": string,"reps": string,"rm_percentage": number,"rm_result_id": number,"sets": number,"superset_group": number,"weight_source": string
+            }[]
+                           },
+"effective_weights_at":
+{ Args: { "p_class_id": number,"p_date": string }; Returns: {
+              "calculated_kg": number,"client_id": number,"effective_kg": number,"exercise_id": number,"exercise_name": string,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_note": string,"override_review_date": string,"program_version_id": number,"reps": string,"rm_percentage": number,"rm_result_id": number,"sets": number,"superset_group": number,"weight_source": string
             }[]
                            },
 "effective_weights_for_client":
@@ -826,6 +916,9 @@ isOneToOne: false
                            },
 "set_program_archived":
 { Args: { "p_archived": boolean,"p_program_id": number }; Returns: undefined
+                           },
+"snapshot_today":
+{ Args: { "p_class_id": number }; Returns: number
                            },
 "validate_supersets":
 { Args: { "p_version_id": number }; Returns: undefined

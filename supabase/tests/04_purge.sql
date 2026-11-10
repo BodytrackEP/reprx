@@ -8,7 +8,10 @@ grant execute on all functions in schema extensions to authenticated;
 
 -- Clients start empty so the counts below are exact. Classes and exercises are compared
 -- before and after, since programs reference them. All of this rolls back.
+-- Locked session records refuse ordinary deletes, so this uses the purge's exemption.
+insert into private.purge_context (xact) values (pg_current_xact_id()::text);
 delete from public.clients;
+delete from private.purge_context;
 create temp table shared_before on commit drop as
   select (select count(*)::int from public.classes) as classes,
          (select count(*)::int from public.exercises) + 1 as exercises;

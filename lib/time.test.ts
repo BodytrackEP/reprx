@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatTime, todayDayOfWeek, todayIso } from "./time";
+import {
+  addDays,
+  adjacentWeekday,
+  dayOfWeek,
+  formatDate,
+  formatTime,
+  todayDayOfWeek,
+  todayIso,
+} from "./time";
 
 describe("practice dates", () => {
   // 22:00 UTC on Sunday is 08:00 Monday in Brisbane.
@@ -22,5 +30,22 @@ describe("formatting", () => {
 
   it("shows Australian dates", () => {
     expect(formatDate("2026-03-09")).toBe("09/03/2026");
+  });
+});
+
+describe("session dates", () => {
+  // 2026-11-10 is a Tuesday.
+  it("adds days across a month end", () => {
+    expect(addDays("2026-11-30", 1)).toBe("2026-12-01");
+    expect(addDays("2026-11-01", -1)).toBe("2026-10-31");
+  });
+
+  it("finds the previous and next class day", () => {
+    expect(dayOfWeek("2026-11-10")).toBe(2);
+    expect(adjacentWeekday("2026-11-10", 1, -1)).toBe("2026-11-09");
+    expect(adjacentWeekday("2026-11-10", 1, 1)).toBe("2026-11-16");
+    // From a class day itself, step a whole week.
+    expect(adjacentWeekday("2026-11-10", 2, -1)).toBe("2026-11-03");
+    expect(adjacentWeekday("2026-11-10", 2, 1)).toBe("2026-11-17");
   });
 });

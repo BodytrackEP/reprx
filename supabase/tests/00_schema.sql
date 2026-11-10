@@ -74,7 +74,8 @@ select set_eq($$
   where n.nspname = 'public' and p.prosecdef
 $$, array[
   'is_staff', 'is_admin', 'audit_row', 'purge_test_data',
-  'record_authenticator_reset', 'record_invite_link', 'open_enrolment', 'close_enrolment'
+  'record_authenticator_reset', 'record_invite_link', 'open_enrolment', 'close_enrolment',
+  'snapshot_today', 'edit_snapshot_row'
 ],
 'security definer is limited to the functions that need it');
 

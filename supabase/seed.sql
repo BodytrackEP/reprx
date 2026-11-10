@@ -322,4 +322,19 @@ from public.rm_results r
 where r.id = (select min(id) from public.rm_results where session_id = 900013)
 on conflict (id) do nothing;
 
+
+-- Locked session records for each class's last two sessions before today. They're taken
+-- with today's data, so they're illustrative only.
+select private.snapshot_session(c.id, d.session_date, 'seed')
+from public.classes c
+cross join lateral (
+  select public.practice_today() - ((extract(dow from public.practice_today())::int - c.day_of_week + 7) % 7)
+         - case when (extract(dow from public.practice_today())::int - c.day_of_week + 7) % 7 = 0 then 7 else 0 end
+         - 7 * w as session_date
+  from generate_series(0, 1) as w
+) d
+where c.id between 900001 and 900009;
+
+select private.lock_sessions(public.practice_today() - 1);
+
 commit;

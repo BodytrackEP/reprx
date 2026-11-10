@@ -211,7 +211,7 @@ select is_empty(
   'the reset ends that person''s sessions');
 select results_eq(
   $$ select actor::text, actor_label, row_pk from public.audit_log
-     where actor_label = 'mfa:reset' $$,
+     where actor_label = 'mfa:reset' and actor = '00000000-0000-0000-0000-00000000000b' $$,
   $$ values ('00000000-0000-0000-0000-00000000000b'::text, 'mfa:reset'::text,
              '00000000-0000-0000-0000-00000000000a'::text) $$,
   'the reset is audited with the admin and the target');
@@ -236,7 +236,7 @@ reset role;
 
 select results_eq(
   $$ select actor::text, row_pk, new_row from public.audit_log
-     where actor_label = 'invite:link' $$,
+     where actor_label = 'invite:link' and actor = '00000000-0000-0000-0000-00000000000b' $$,
   $$ values ('00000000-0000-0000-0000-00000000000b'::text,
              '00000000-0000-0000-0000-00000000000a'::text,
              '{"event": "invite_link_created"}'::jsonb) $$,

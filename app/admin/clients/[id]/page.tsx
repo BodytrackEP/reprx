@@ -288,7 +288,7 @@ export default async function ClientDetailPage({
 
         <section>
           <h2 className="mb-4 text-lg font-semibold text-gray-900">Program History</h2>
-          <ProgramHistory rows={history ?? []} />
+          <ProgramHistory rows={history ?? []} weightsFor={clientId} />
         </section>
 
         <section>

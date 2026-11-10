@@ -29,6 +29,17 @@ async function arrange() {
       rm_percentage: 0.7,
     })),
   );
+  // A member, so the session grid has a column to show.
+  const { data: client } = await admin
+    .from("clients")
+    .insert({ first_name: "Zz", last_name: unique("Superset").replace(/s/g, ""), is_test: true })
+    .select("id")
+    .single();
+  const { data: anyStaff } = await admin.from("staff").select("id").limit(1).single();
+  await admin
+    .from("class_members")
+    .insert({ class_id: classRow!.id, client_id: client!.id, added_by: anyStaff!.id });
+
   return { classId: classRow!.id, program, names: exercises!.map((exercise) => exercise.name) };
 }
 
@@ -69,7 +80,8 @@ test("adjacent exercises are grouped, and the group reaches the class and sessio
   await expect(row(page, "class-row", c)).toHaveAttribute("data-superset", "");
 
   await page.goto(`/admin/sessions/${classId}`);
-  await expect(page.locator('thead th[data-superset]:not([data-superset=""])')).toHaveCount(2);
+  // On the session grid a superset is a group of coloured rows.
+  await expect(page.locator('tbody tr[data-superset]:not([data-superset=""])')).toHaveCount(2);
 
   expect(violations).toEqual([]);
 });

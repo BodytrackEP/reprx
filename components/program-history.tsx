@@ -22,9 +22,12 @@ export type HistoryRow = {
 export function ProgramHistory({
   rows,
   clientNames,
+  weightsFor,
 }: {
   rows: HistoryRow[];
   clientNames?: Map<number, string>;
+  /** On a client's page: link each period to its recorded session weights. */
+  weightsFor?: number;
 }) {
   if (rows.length === 0) {
     return <p className="text-sm text-gray-500">No program history yet.</p>;
@@ -42,6 +45,11 @@ export function ProgramHistory({
             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Class</th>
             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">From</th>
             <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">To</th>
+            {weightsFor && (
+              <th className="px-4 py-3">
+                <span className="sr-only">Weights</span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -73,6 +81,16 @@ export function ProgramHistory({
               <td className="px-4 py-3 text-sm text-gray-500">
                 {row.to_date ? formatDate(row.to_date) : "Ongoing"}
               </td>
+              {weightsFor && (
+                <td className="px-4 py-3 text-right text-sm">
+                  <Link
+                    href={`/admin/clients/${weightsFor}/sessions?class=${row.class_id}&from=${row.from_date}${row.to_date ? `&to=${row.to_date}` : ""}`}
+                    className="font-medium text-indigo-600 hover:text-indigo-800"
+                  >
+                    Weights
+                  </Link>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

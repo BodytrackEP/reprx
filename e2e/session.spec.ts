@@ -93,8 +93,10 @@ test("the session view shows every member by every exercise, and takes overrides
   await page.goto(`/admin/sessions/${classRow.id}`);
   await expect(page.getByRole("heading", { name: classRow.name })).toBeVisible();
 
-  await expect(page.locator("tbody tr")).toHaveCount(15);
-  await expect(page.locator("tbody tr").first().locator("td")).toHaveCount(12);
+  // Transposed: exercises down the left, clients across the top.
+  await expect(page.locator("tbody tr")).toHaveCount(12);
+  await expect(page.locator("tbody tr").first().locator("td")).toHaveCount(15);
+  await expect(page.locator('tbody tr[data-superset="1"]')).toHaveCount(2);
 
   const overridden = `${clients[0].first_name} ${clients[0].last_name}`;
   const other = `${clients[1].first_name} ${clients[1].last_name}`;
@@ -116,8 +118,11 @@ test("the session view shows every member by every exercise, and takes overrides
   // Text is at least 20px, for a projector.
   const fontSize = (locator: ReturnType<typeof page.locator>) =>
     locator.evaluate((element) => parseFloat(getComputedStyle(element).fontSize));
-  expect(await fontSize(page.getByRole("link", { name: other }))).toBeGreaterThanOrEqual(20);
-  expect(await fontSize(page.locator("thead th").nth(1))).toBeGreaterThanOrEqual(20);
+  // Column headings are abbreviated, with the full name in a tooltip.
+  const otherHeading = page.locator(`thead a[title="${other}"]`);
+  await expect(otherHeading).toHaveText(/^Zz Client02/);
+  expect(await fontSize(otherHeading)).toBeGreaterThanOrEqual(20);
+  expect(await fontSize(page.locator("tbody th").first())).toBeGreaterThanOrEqual(20);
   expect(await fontSize(cell(10, other).getByText("Starting weight"))).toBeGreaterThanOrEqual(20);
 
   // Tapping a cell opens the override form.
@@ -134,7 +139,7 @@ test("the session view prints on one A4 landscape page", async ({ page }) => {
   const { classRow } = await arrangeClass(staff.id);
 
   await page.goto(`/admin/sessions/${classRow.id}`);
-  await expect(page.locator("tbody tr")).toHaveCount(15);
+  await expect(page.locator("tbody tr")).toHaveCount(12);
 
   await page.emulateMedia({ media: "print" });
   // A4 landscape, less 10 mm margins, at 96 dpi.
