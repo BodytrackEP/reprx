@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { admin, programForClass, signInFully } from "./support";
+import { admin, programForClass, signInFully, testingSession } from "./support";
 
 const unique = (name: string) => `${name}${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
@@ -39,13 +39,9 @@ async function arrange(staffId: string) {
     classes.push(classRow!.id);
   }
 
-  await admin.from("rm_tests").insert({
-    client_id: client!.id,
-    exercise_id: exercise!.id,
-    reps: 1,
-    weight_kg: 57.5,
-    recorded_by: staffId,
-  });
+  await testingSession(client!.id, staffId, [
+    { exercise_id: exercise!.id, reps: 1, weight_kg: 57.5 },
+  ]);
 
   return {
     clientId: client!.id,
@@ -114,14 +110,8 @@ test("the client page summarises tests, and a due review reaches the dashboard",
   const staff = await signInFully(page, "ep");
   const { clientId, exercise } = await arrange(staff.id);
 
-  await admin.from("rm_tests").insert({
-    client_id: clientId,
-    exercise_id: exercise.id,
-    test_date: "2020-01-01",
-    reps: 1,
-    weight_kg: 50,
-    recorded_by: staff.id,
-  });
+  await testingSession(clientId, staff.id, [{ exercise_id: exercise.id, reps: 1, weight_kg: 50 }],
+    "2020-01-01");
   await admin.from("weight_overrides").insert({
     client_id: clientId,
     exercise_id: exercise.id,
@@ -167,6 +157,7 @@ test("an override goes dormant when its exercise leaves the program, and returns
   // Bringing it back into one class makes it active again.
   await page.goto(`/admin/classes/${classA}/program`);
   await page.getByRole("button", { name: "Restore from library" }).click();
+  await expect(page.getByText("Removed for this class")).toHaveCount(0);
   await page.goto(`/admin/clients/${clientId}`);
   await expect(page.getByRole("heading", { name: "Active Overrides (1)" })).toBeVisible();
   await expect(page.getByTestId("dormant-override")).toHaveCount(0);

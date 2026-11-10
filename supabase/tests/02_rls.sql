@@ -44,7 +44,8 @@ from unnest(array[
   'programs', 'program_exercises', 'rm_tests', 'weight_overrides', 'app_settings',
   'audit_log', 'effective_weights_v', 'library_programs', 'program_versions',
   'program_version_items', 'class_program_assignments', 'class_program_items',
-  'class_program_pushes'
+  'class_program_pushes', 'enrolments', 'rm_testing_sessions', 'rm_results', 'rm_results_v',
+  'program_history_v', 'client_overrides_v'
 ]) t;
 
 select throws_ok('select * from public.effective_weights(3001)', '42501', null,
@@ -96,6 +97,9 @@ select throws_ok(
   '42501', null, 'an EP cannot set auth_user_id');
 select throws_ok('delete from public.clients', '42501', null, 'an EP cannot hard-delete clients');
 select throws_ok('delete from public.rm_tests', '42501', null, 'an EP cannot delete RM tests');
+select throws_ok('delete from public.rm_results', '42501', null, 'an EP cannot delete results');
+select throws_ok('delete from public.rm_testing_sessions', '42501', null,
+  'an EP cannot delete testing sessions');
 select throws_ok('delete from public.weight_overrides', '42501', null, 'an EP cannot delete overrides');
 select is_empty('select * from public.audit_log', 'an EP cannot read the audit log');
 select throws_ok('select public.purge_test_data()', '42501', null, 'an EP cannot purge');
@@ -105,9 +109,13 @@ update public.app_settings set rm_warn_above_reps = 3;
 update public.staff set role = 'admin' where id = '00000000-0000-0000-0000-00000000000a';
 
 select throws_ok(
-  $$ insert into public.rm_tests (client_id, exercise_id, reps, weight_kg, recorded_by)
-     values (1001, 2001, 1, 50, '00000000-0000-0000-0000-00000000000b') $$,
-  '42501', null, 'an RM test cannot be attributed to someone else');
+  $$ insert into public.rm_results (session_id, exercise_id, reps, weight_kg, recorded_by)
+     values (1, 2001, 1, 50, '00000000-0000-0000-0000-00000000000b') $$,
+  '42501', null, 'a result cannot be attributed to someone else');
+select throws_ok(
+  $$ insert into public.rm_testing_sessions (client_id, conducted_by)
+     values (1001, '00000000-0000-0000-0000-00000000000b') $$,
+  '42501', null, 'a session cannot be attributed to someone else');
 select throws_ok('insert into private.purge_context values (''1'')', '42501', null,
   'the audit bypass cannot be set by a caller');
 

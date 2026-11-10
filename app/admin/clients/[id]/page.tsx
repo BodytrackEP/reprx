@@ -5,13 +5,15 @@ import { ClientChips } from "@/components/client-chips";
 import { ConfirmButton } from "@/components/confirm-button";
 import { OverrideButton } from "@/components/override-button";
 import { ProgramHistory } from "@/components/program-history";
-import { RmHistory } from "@/components/rm-history";
+import { RmSessions } from "@/components/rm-sessions";
+import { RmTrends } from "@/components/rm-trends";
 import { isReviewDue } from "@/components/weight-display";
 import { requireStaff } from "@/lib/auth";
 import { clientName } from "@/lib/clients";
 import { DAY_NAMES } from "@/lib/constants";
 import { isCurrent } from "@/lib/programs";
 import { summariseRmTests } from "@/lib/rm";
+import { loadClientRm } from "@/lib/rm-data";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatTime, todayIso } from "@/lib/time";
 import { idSchema } from "@/lib/validation/catalog";
@@ -40,7 +42,7 @@ export default async function ClientDetailPage({
   const [
     { data: client },
     { data: classes },
-    { data: testRows },
+    rm,
     { data: overrideRows },
     { data: history },
     { data: liveOverrides },
@@ -53,14 +55,7 @@ export default async function ClientDetailPage({
       .eq("id", clientId)
       .maybeSingle(),
     supabase.from("classes").select("id, name").eq("is_active", true).order("name"),
-    supabase
-      .from("rm_tests")
-      .select(
-        "id, exercise_id, test_date, created_at, reps, weight_kg, estimated_1rm_kg, notes, voided_at, voided_reason, exercises(name)",
-      )
-      .eq("client_id", clientId)
-      .order("test_date", { ascending: false })
-      .order("created_at", { ascending: false }),
+    loadClientRm(supabase, clientId),
     supabase
       .from("weight_overrides")
       .select(
@@ -80,15 +75,23 @@ export default async function ClientDetailPage({
   const memberships = client.class_members.map((member) => member.classes);
   const name = clientName(client);
   const today = todayIso();
-  const tests = testRows ?? [];
+  // One row per valid result, for the per-exercise summary.
+  const tests = rm.sessions.flatMap((session) =>
+    session.rm_results.map((result) => ({
+      exercise_id: result.exercise_id,
+      exercise_name: result.exercises.name,
+      test_date: session.test_date,
+      created_at: `${session.test_date}T${String(session.session_no).padStart(6, "0")}`,
+      estimated_1rm_kg: result.estimated_1rm_kg,
+      voided_at: result.voided_at,
+    })),
+  );
   const overrides = overrideRows ?? [];
   // Dormant overrides are kept but not shown in sessions: the exercise isn't in any of the
   // client's current programs. They apply again automatically if it returns.
   const activeOverrides = (liveOverrides ?? []).filter((override) => !override.is_dormant);
   const dormantOverrides = (liveOverrides ?? []).filter((override) => override.is_dormant);
-  const summary = summariseRmTests(
-    tests.map((test) => ({ ...test, exercise_name: test.exercises.name })),
-  );
+  const summary = summariseRmTests(tests);
 
   return (
     <div>
@@ -289,6 +292,11 @@ export default async function ClientDetailPage({
         </section>
 
         <section>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">RM Trends</h2>
+          <RmTrends trends={rm.trends} today={today} />
+        </section>
+
+        <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">RM Summary</h2>
             <Link
@@ -342,7 +350,7 @@ export default async function ClientDetailPage({
           <h2 className="mb-4 text-lg font-semibold text-gray-900">History</h2>
           <nav aria-label="History" className="mb-4 flex gap-2">
             {[
-              { key: "rm", label: "RM tests" },
+              { key: "rm", label: "Testing sessions" },
               { key: "overrides", label: "Overrides" },
             ].map(({ key, label }) => (
               <Link
@@ -361,7 +369,7 @@ export default async function ClientDetailPage({
             ))}
           </nav>
           {tab === "rm" ? (
-            <RmHistory tests={tests} />
+            <RmSessions sessions={rm.sessions} clientId={clientId} linkSessions />
           ) : overrides.length > 0 ? (
             <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
               <table className="min-w-full divide-y divide-gray-200">

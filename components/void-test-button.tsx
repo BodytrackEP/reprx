@@ -1,12 +1,12 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { voidRmTest } from "@/app/admin/rm-testing/actions";
+import { voidResult } from "@/app/admin/rm-testing/actions";
 import { Field, FormMessage, SubmitButton } from "./form";
 import { Modal } from "./modal";
 
-function VoidForm({ testId, onDone }: { testId: number; onDone: () => void }) {
-  const [state, action] = useActionState(voidRmTest, {});
+function VoidForm({ resultId, onDone }: { resultId: number; onDone: () => void }) {
+  const [state, action] = useActionState(voidResult, {});
 
   useEffect(() => {
     if (state.success) onDone();
@@ -15,28 +15,29 @@ function VoidForm({ testId, onDone }: { testId: number; onDone: () => void }) {
 
   return (
     <form action={action} className="space-y-4">
-      <input type="hidden" name="id" value={testId} />
+      <input type="hidden" name="id" value={resultId} />
       <p className="text-sm text-gray-600">
-        Voided tests stay in the history but no longer affect working weights. To correct
-        a mistake, void it and record the right result.
+        Voided results stay in the session but no longer count towards weights or trends. To
+        correct a mistake, void it and record the exercise again in the same session.
       </p>
       <Field label="Reason" name="reason" maxLength={200} required />
       <FormMessage state={state.error ? state : {}} />
       <div className="flex justify-end">
-        <SubmitButton>Void test</SubmitButton>
+        <SubmitButton>Void result</SubmitButton>
       </div>
     </form>
   );
 }
 
-export function VoidTestButton({ testId, label }: { testId: number; label: string }) {
+export function VoidResultButton({ resultId, label }: { resultId: number; label: string }) {
   return (
     <Modal
       label="Void"
+      ariaLabel={`Void ${label}`}
       title={`Void ${label}`}
       buttonClassName="text-sm text-gray-500 hover:text-red-700"
     >
-      {(close) => <VoidForm testId={testId} onDone={close} />}
+      {(close) => <VoidForm resultId={resultId} onDone={close} />}
     </Modal>
   );
 }

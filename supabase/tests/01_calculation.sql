@@ -15,6 +15,21 @@ insert into public.clients (id, first_name, last_name, is_test) overriding syste
   (1001, 'Zz-One', 'Test', true),
   (1002, 'Zz-Two', 'Test', true);
 
+create schema test_helpers;
+-- One testing session holding one result.
+create function test_helpers.rm(p_client bigint, p_exercise bigint, p_date date, p_reps int,
+  p_weight numeric) returns bigint language sql as $fn$
+  with s as (
+    insert into public.rm_testing_sessions (client_id, test_date) values (p_client, p_date)
+    returning id
+  )
+  insert into public.rm_results (session_id, exercise_id, reps, weight_kg)
+  select id, p_exercise, p_reps, p_weight from s
+  returning id;
+$fn$;
+grant usage on schema test_helpers to authenticated;
+grant execute on function test_helpers.rm(bigint, bigint, date, int, numeric) to authenticated;
+
 insert into public.exercises (id, name) overriding system value values
   (2001, 'Zz Press'), (2002, 'Zz Row'), (2003, 'Zz Curl'), (2004, 'Zz Plank');
 
@@ -42,13 +57,12 @@ insert into public.class_members (class_id, client_id) values
   (3001, 1001), (3001, 1002), (3002, 1001);
 
 -- Epley
-insert into public.rm_tests (client_id, exercise_id, test_date, reps, weight_kg) values
-  (1002, 2003, '2026-01-01', 3, 30),
-  (1002, 2004, '2026-01-01', 1, 50);
+select test_helpers.rm(1002, 2003, '2026-01-01', 3, 30);
+select test_helpers.rm(1002, 2004, '2026-01-01', 1, 50);
 
-select is((select estimated_1rm_kg from public.rm_tests where client_id = 1002 and exercise_id = 2003),
+select is((select estimated_1rm_kg from public.rm_results_v where client_id = 1002 and exercise_id = 2003),
   33.00::numeric, '3RM at 30 kg gives a 1RM of 33.00 kg');
-select is((select estimated_1rm_kg from public.rm_tests where client_id = 1002 and exercise_id = 2004),
+select is((select estimated_1rm_kg from public.rm_results_v where client_id = 1002 and exercise_id = 2004),
   50.00::numeric, '1RM at 50 kg gives 50 kg, not raw Epley');
 
 -- Rounding
@@ -57,8 +71,7 @@ select is(public.round_to_increment(41.25, 2.5), 42.5::numeric, 'half rounds up'
 select is(public.round_to_increment(-41.25, 2.5), -42.5::numeric, 'half rounds away from zero');
 
 -- Calculated
-insert into public.rm_tests (client_id, exercise_id, test_date, reps, weight_kg) values
-  (1001, 2001, '2026-01-01', 1, 57.5);
+select test_helpers.rm(1001, 2001, '2026-01-01', 1, 57.5);
 
 select results_eq(
   $$ select effective_kg, weight_source, latest_1rm_kg, calculated_kg
@@ -94,15 +107,14 @@ select results_eq(
   'ending an override reverts to the calculated weight');
 
 -- Voided tests
-insert into public.rm_tests (client_id, exercise_id, test_date, reps, weight_kg) values
-  (1001, 2001, '2026-06-01', 1, 200);
+select test_helpers.rm(1001, 2001, '2026-06-01', 1, 200) as heavy \gset
 
 select is(
   (select effective_kg from public.effective_weights(3001) where client_id = 1001 and exercise_id = 2001),
   140.0::numeric, 'the latest test by date is used');
 
-update public.rm_tests set voided_at = now(), voided_reason = 'Entered in error'
-where client_id = 1001 and exercise_id = 2001 and test_date = '2026-06-01';
+update public.rm_results set voided_at = now(), voided_reason = 'Entered in error'
+where id = :heavy;
 
 select results_eq(
   $$ select effective_kg, latest_test_date
@@ -117,8 +129,7 @@ select results_eq(
   $$ values (20.00::numeric, 'fallback'::text) $$,
   'the fallback is used when there is no test');
 
-insert into public.rm_tests (client_id, exercise_id, test_date, reps, weight_kg) values
-  (1001, 2002, '2026-01-01', 1, 50);
+select test_helpers.rm(1001, 2002, '2026-01-01', 1, 50);
 
 select results_eq(
   $$ select effective_kg, weight_source

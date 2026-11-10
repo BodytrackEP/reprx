@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { admin, programForClass, signInFully } from "./support";
+import { admin, programForClass, signInFully, testingSession } from "./support";
 
 const unique = (name: string) => `${name}${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
@@ -60,17 +60,17 @@ async function arrangeClass(staffId: string) {
     );
 
   // Everyone is tested on the first nine exercises.
-  await admin.from("rm_tests").insert(
-    clients!.flatMap((client) =>
+  for (const client of clients!) {
+    await testingSession(
+      client.id,
+      staffId,
       exercises!.slice(0, 9).map((exercise) => ({
-        client_id: client.id,
         exercise_id: exercise.id,
         reps: 1,
         weight_kg: 57.5,
-        recorded_by: staffId,
       })),
-    ),
-  );
+    );
+  }
 
   await admin.from("weight_overrides").insert({
     client_id: clients![0].id,

@@ -28,8 +28,13 @@ insert into public.exercises (id, name) overriding system value values (2001, 'Z
 
 insert into public.class_members (class_id, client_id, added_by)
 select 3001, c, '00000000-0000-0000-0000-00000000000b' from unnest(array[1001, 1002, 1003]) c;
-insert into public.rm_tests (client_id, exercise_id, reps, weight_kg, recorded_by)
-select c, 2001, 1, 50, '00000000-0000-0000-0000-00000000000b' from unnest(array[1001, 1002, 1003]) c;
+with s as (
+  insert into public.rm_testing_sessions (client_id, conducted_by)
+  select c, '00000000-0000-0000-0000-00000000000b' from unnest(array[1001, 1002, 1003]) c
+  returning id
+)
+insert into public.rm_results (session_id, exercise_id, reps, weight_kg, recorded_by)
+select id, 2001, 1, 50, '00000000-0000-0000-0000-00000000000b' from s;
 insert into public.weight_overrides (client_id, exercise_id, override_weight_kg, reason, set_by)
 select c, 2001, 20, 'Zz reason', '00000000-0000-0000-0000-00000000000b' from unnest(array[1001, 1003]) c;
 
@@ -42,7 +47,7 @@ set local role authenticated;
 
 select is(
   public.purge_test_data(),
-  '{"clients": 2, "class_members": 2, "rm_tests": 2, "weight_overrides": 1}'::jsonb,
+  '{"clients": 2, "class_members": 2, "rm_sessions": 2, "rm_results": 2, "weight_overrides": 1}'::jsonb,
   'purge reports what it removed');
 
 reset role;
@@ -51,7 +56,7 @@ select results_eq('select id from public.clients order by id', 'values (1003::bi
   'only the real client remains');
 select results_eq('select client_id from public.class_members', 'values (1003::bigint)',
   'the real client''s membership remains');
-select results_eq('select client_id from public.rm_tests', 'values (1003::bigint)',
+select results_eq('select client_id from public.rm_results_v', 'values (1003::bigint)',
   'the real client''s test remains');
 select results_eq('select client_id from public.weight_overrides', 'values (1003::bigint)',
   'the real client''s override remains');

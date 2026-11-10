@@ -24,6 +24,19 @@ overriding system value values
 insert into public.exercises (id, name) overriding system value values (2001, 'Zz Press');
 
 create schema test_helpers;
+-- One testing session holding one result.
+create function test_helpers.rm(p_client bigint, p_exercise bigint, p_date date, p_reps int,
+  p_weight numeric) returns bigint language sql as $fn$
+  with s as (
+    insert into public.rm_testing_sessions (client_id, test_date) values (p_client, p_date)
+    returning id
+  )
+  insert into public.rm_results (session_id, exercise_id, reps, weight_kg)
+  select id, p_exercise, p_reps, p_weight from s
+  returning id;
+$fn$;
+grant usage on schema test_helpers to authenticated;
+grant execute on function test_helpers.rm(bigint, bigint, date, int, numeric) to authenticated;
 create function test_helpers.login(p_sub text) returns void language sql as $$
   select set_config('request.jwt.claims',
     json_build_object('sub', p_sub, 'role', 'authenticated', 'aal', 'aal2')::text, true);
@@ -70,7 +83,7 @@ select throws_ok('select public.move_client(1002, 3001, 3001)', 'RX006', null,
 select lives_ok(
   $$ select public.set_override(1002, 2001, 20, 'L knee rehab') $$, 'override set');
 select lives_ok(
-  $$ insert into public.rm_tests (client_id, exercise_id, reps, weight_kg) values (1002, 2001, 1, 60) $$,
+  $$ select test_helpers.rm(1002, 2001, public.practice_today(), 1, 60) $$,
   'test recorded');
 
 update public.classes set max_capacity = 2 where id = 3002;
@@ -83,7 +96,7 @@ select is(
   (select count(*)::int from public.weight_overrides where client_id = 1002 and ended_at is null), 1,
   'the override survives the move');
 select is(
-  (select count(*)::int from public.rm_tests where client_id = 1002), 1,
+  (select count(*)::int from public.rm_results_v where client_id = 1002), 1,
   'the RM test survives the move');
 
 -- Admin capacity override
@@ -111,22 +124,27 @@ select test_helpers.login('00000000-0000-0000-0000-00000000000a');
 set local role authenticated;
 
 -- RM tests are append-only
-select throws_ok('update public.rm_tests set weight_kg = 99 where client_id = 1002',
-  'RX003', null, 'an RM test cannot be edited');
+create temp view my_result as
+  select r.id from public.rm_results r
+  join public.rm_testing_sessions s on s.id = r.session_id where s.client_id = 1002;
+grant select on my_result to authenticated;
+
+select throws_ok('update public.rm_results set weight_kg = 99 where id in (select id from my_result)',
+  '42501', null, 'a result''s weight can''t be updated at all');
 select throws_ok(
-  $$ update public.rm_tests set weight_kg = 99, voided_at = now(), voided_reason = 'sneaky'
-     where client_id = 1002 $$,
-  'RX003', null, 'voiding cannot smuggle in an edit');
+  $$ update public.rm_results set voided_at = now(), voided_reason = 'sneaky', reps = 9
+     where id in (select id from my_result) $$,
+  '42501', null, 'voiding cannot smuggle in an edit');
 select throws_ok(
-  $$ update public.rm_tests set voided_at = now() where client_id = 1002 $$,
+  $$ update public.rm_results set voided_at = now() where id in (select id from my_result) $$,
   '23514', null, 'voiding needs a reason');
 select lives_ok(
-  $$ update public.rm_tests set voided_at = now(), voided_reason = 'Wrong client'
-     where client_id = 1002 $$,
+  $$ update public.rm_results set voided_at = now(), voided_reason = 'Wrong client'
+     where id in (select id from my_result) $$,
   'a test can be voided');
 select throws_ok(
-  $$ update public.rm_tests set voided_at = now(), voided_reason = 'Again please'
-     where client_id = 1002 $$,
+  $$ update public.rm_results set voided_at = now(), voided_reason = 'Again please'
+     where id in (select id from my_result) $$,
   'RX003', null, 'a test can only be voided once');
 
 -- Overrides keep their history

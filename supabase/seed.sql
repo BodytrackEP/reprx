@@ -186,29 +186,6 @@ begin
 end;
 $$;
 
--- About 70% of (client, program exercise) pairs have a test.
-insert into public.rm_tests
-  (id, client_id, exercise_id, test_date, reps, weight_kg, recorded_by)
-overriding system value
-select
-  900000 + row_number() over (order by pairs.client_id, pairs.exercise_id),
-  pairs.client_id,
-  pairs.exercise_id,
-  date '2026-01-15' + (pairs.client_id % 60)::int,
-  (array[1, 3, 5])[1 + (pairs.client_id + pairs.exercise_id) % 3],
-  20 + ((pairs.client_id * 7 + pairs.exercise_id * 3) % 16) * 5,
-  '00000000-0000-0000-0000-000000000900'
-from (
-  select distinct m.client_id, pe.exercise_id
-  from public.class_members m
-  join public.programs p on p.class_id = m.class_id
-  join public.program_exercises pe on pe.program_id = p.id
-  where m.client_id between 900001 and 900040
-    and pe.rm_percentage is not null
-) as pairs
-where (pairs.client_id * 7 + pairs.exercise_id * 13) % 10 < 7
-on conflict do nothing;
-
 -- Five active overrides. The first two are past their review date.
 insert into public.weight_overrides
   (id, client_id, exercise_id, override_weight_kg, note, review_date, set_by)
@@ -294,5 +271,55 @@ where e.id between 900001 and 900020
 order by e.id
 limit 1
 on conflict do nothing;
+
+
+-- RM testing sessions: most clients have 3 to 5 sessions about four weeks apart, so trend
+-- graphs show for several exercises. Each session tests most of the client's loaded
+-- exercises, with results improving a little each time.
+insert into public.rm_testing_sessions (id, client_id, test_date, conducted_by, notes)
+overriding system value
+select 900000 + n * 10 + j, 900000 + n,
+       public.practice_today() - 28 * (3 + n % 3 - j) - (n % 5),
+       '00000000-0000-0000-0000-000000000900',
+       case when j = 1 then 'Baseline testing' end
+from generate_series(1, 40) as n
+cross join lateral generate_series(1, 3 + n % 3) as j
+where n % 7 <> 0
+order by n, j
+on conflict (id) do nothing;
+
+insert into public.rm_results (id, session_id, exercise_id, reps, weight_kg, recorded_by)
+overriding system value
+select s.id * 100 + (x.exercise_id - 900000), s.id, x.exercise_id,
+       (array[1, 3, 5])[1 + (s.client_id + x.exercise_id + s.session_no) % 3],
+       round(
+         (20 + ((s.client_id * 7 + x.exercise_id * 3) % 16) * 5)
+         * (0.85 + 0.05 * s.session_no)
+         / 2.5) * 2.5,
+       '00000000-0000-0000-0000-000000000900'
+from public.rm_testing_sessions s
+cross join lateral (
+  select distinct i.exercise_id
+  from public.class_members m
+  join public.class_program_assignments a
+    on a.class_id = m.class_id
+   and public.practice_today() between a.start_date and coalesce(a.end_date, 'infinity'::date)
+  join public.class_program_items i
+    on i.assignment_id = a.id and not i.is_removed and i.rm_percentage is not null
+  where m.client_id = s.client_id
+) x
+where s.id between 900000 and 900999
+  and (s.client_id * 7 + x.exercise_id * 13 + s.session_no) % 10 < 8
+on conflict (id) do nothing;
+
+-- One result was entered in error, voided, and recorded again in the same session.
+insert into public.rm_results
+  (id, session_id, exercise_id, reps, weight_kg, recorded_by, voided_at, voided_reason)
+overriding system value
+select r.id + 90000000, r.session_id, r.exercise_id, r.reps, r.weight_kg * 2,
+       r.recorded_by, now(), 'Typed the wrong weight'
+from public.rm_results r
+where r.id = (select min(id) from public.rm_results where session_id = 900013)
+on conflict (id) do nothing;
 
 commit;

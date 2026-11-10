@@ -427,6 +427,70 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"rm_results": {
+                  Row: {
+                    "created_at": string,"estimated_1rm_kg": number | null,"exercise_id": number,"id": number,"recorded_by": string,"reps": number,"session_id": number,"updated_at": string,"voided_at": string | null,"voided_by": string | null,"voided_reason": string | null,"weight_kg": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"estimated_1rm_kg"?: never,"exercise_id": number,"id"?: never,"recorded_by"?: string,"reps": number,"session_id": number,"updated_at"?: string,"voided_at"?: string | null,"voided_by"?: string | null,"voided_reason"?: string | null,"weight_kg": number
+                  }
+                  Update: {
+                    "created_at"?: string,"estimated_1rm_kg"?: never,"exercise_id"?: number,"id"?: never,"recorded_by"?: string,"reps"?: number,"session_id"?: number,"updated_at"?: string,"voided_at"?: string | null,"voided_by"?: string | null,"voided_reason"?: string | null,"weight_kg"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "rm_results_exercise_id_fkey"
+      columns: ["exercise_id"]
+isOneToOne: false
+      referencedRelation: "exercises"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rm_results_recorded_by_fkey"
+      columns: ["recorded_by"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rm_results_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "rm_testing_sessions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rm_results_voided_by_fkey"
+      columns: ["voided_by"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"rm_testing_sessions": {
+                  Row: {
+                    "client_id": number,"conducted_by": string,"created_at": string,"id": number,"notes": string | null,"session_no": number,"test_date": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "client_id": number,"conducted_by"?: string,"created_at"?: string,"id"?: never,"notes"?: string | null,"session_no"?: number,"test_date"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "client_id"?: number,"conducted_by"?: string,"created_at"?: string,"id"?: never,"notes"?: string | null,"session_no"?: number,"test_date"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "rm_testing_sessions_client_id_fkey"
+      columns: ["client_id"]
+isOneToOne: false
+      referencedRelation: "clients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rm_testing_sessions_conducted_by_fkey"
+      columns: ["conducted_by"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"rm_tests": {
                   Row: {
                     "client_id": number,"created_at": string,"estimated_1rm_kg": number | null,"exercise_id": number,"id": number,"notes": string | null,"recorded_by": string,"reps": number,"test_date": string,"updated_at": string,"voided_at": string | null,"voided_reason": string | null,"weight_kg": number
@@ -536,7 +600,7 @@ isOneToOne: false
                   ]
                 },"effective_weights_v": {
                   Row: {
-                    "assignment_id": number,"calculated_kg": number | null,"class_id": number,"client_id": number,"effective_kg": number | null,"exercise_id": number,"fallback_kg": number | null,"item_id": number,"item_key": string,"latest_1rm_kg": number | null,"latest_test_date": string | null,"order_index": number,"override_kg": number | null,"override_note": string | null,"override_review_date": string | null,"reps": string,"rm_percentage": number | null,"sets": number,"superset_group": number | null,"weight_source": string | null
+                    "assignment_id": number,"calculated_kg": number | null,"class_id": number,"client_id": number,"effective_kg": number | null,"exercise_id": number,"fallback_kg": number | null,"item_id": number,"item_key": string,"latest_1rm_kg": number | null,"latest_test_date": string | null,"order_index": number,"override_kg": number | null,"override_note": string | null,"override_review_date": string | null,"reps": string,"rm_percentage": number | null,"rm_result_id": number | null,"sets": number,"superset_group": number | null,"weight_source": string | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -592,6 +656,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"rm_results_v": {
+                  Row: {
+                    "client_id": number,"created_at": string,"estimated_1rm_kg": number | null,"exercise_id": number,"exercise_name": string,"id": number,"reps": number,"session_id": number,"session_no": number,"test_date": string,"weight_kg": number
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "rm_results_exercise_id_fkey"
+      columns: ["exercise_id"]
+isOneToOne: false
+      referencedRelation: "exercises"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rm_results_session_id_fkey"
+      columns: ["session_id"]
+isOneToOne: false
+      referencedRelation: "rm_testing_sessions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rm_testing_sessions_client_id_fkey"
+      columns: ["client_id"]
+isOneToOne: false
+      referencedRelation: "clients"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Functions: {
@@ -636,12 +726,12 @@ isOneToOne: false
                            },
 "effective_weights":
 { Args: { "p_class_id": number }; Returns: {
-              "calculated_kg": number,"client_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_note": string,"override_review_date": string,"reps": string,"rm_percentage": number,"sets": number,"superset_group": number,"weight_source": string
+              "calculated_kg": number,"client_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_note": string,"override_review_date": string,"reps": string,"rm_percentage": number,"rm_result_id": number,"sets": number,"superset_group": number,"weight_source": string
             }[]
                            },
 "effective_weights_for_client":
 { Args: { "p_client_id": number }; Returns: {
-              "calculated_kg": number,"class_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_note": string,"override_review_date": string,"reps": string,"rm_percentage": number,"sets": number,"superset_group": number,"weight_source": string
+              "calculated_kg": number,"class_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_note": string,"override_review_date": string,"reps": string,"rm_percentage": number,"rm_result_id": number,"sets": number,"superset_group": number,"weight_source": string
             }[]
                            },
 "end_override":

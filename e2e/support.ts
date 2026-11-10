@@ -57,6 +57,26 @@ export async function programForClass(classId: number, items: ProgramItem[]) {
   return { id: programId as number, name };
 }
 
+/** Records a testing session for a client holding the given results. */
+export async function testingSession(
+  clientId: number,
+  staffId: string,
+  results: { exercise_id: number; reps: number; weight_kg: number }[],
+  testDate = todayIso(),
+) {
+  const { data: session, error } = await admin
+    .from("rm_testing_sessions")
+    .insert({ client_id: clientId, test_date: testDate, conducted_by: staffId })
+    .select("id, session_no")
+    .single();
+  if (error) throw error;
+  const { error: resultError } = await admin
+    .from("rm_results")
+    .insert(results.map((result) => ({ ...result, session_id: session.id, recorded_by: staffId })));
+  if (resultError) throw resultError;
+  return session;
+}
+
 /** The link in the newest local email to this address with this subject. */
 export async function emailLink(to: string, subject: string) {
   const query = encodeURIComponent(`to:${to} subject:"${subject}"`);
