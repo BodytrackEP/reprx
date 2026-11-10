@@ -9,6 +9,8 @@ import { DAY_NAMES } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 import { formatTime, todayIso } from "@/lib/time";
 import { idSchema } from "@/lib/validation/catalog";
+import { loadClassProgram } from "@/lib/class-program";
+import { formatPrescription } from "@/lib/programs";
 import { PrintButton } from "./print-button";
 
 export default async function SessionViewPage({
@@ -20,19 +22,14 @@ export default async function SessionViewPage({
   const classId = id.data;
 
   const supabase = await createClient();
-  const [{ data: classRow }, { data: program }, { data: memberRows }, { data: weights, error }] =
+  const [{ data: classRow }, program, { data: memberRows }, { data: weights, error }] =
     await Promise.all([
       supabase
         .from("classes")
         .select("name, day_of_week, start_time, class_categories(label, colour)")
         .eq("id", classId)
         .maybeSingle(),
-      supabase
-        .from("programs")
-        .select("program_exercises(exercise_id, order_index, sets, reps, rm_percentage, exercises(name))")
-        .eq("class_id", classId)
-        .order("order_index", { referencedTable: "program_exercises" })
-        .maybeSingle(),
+      loadClassProgram(supabase, classId),
       supabase
         .from("class_members")
         .select("clients(id, first_name, last_name, preferred_name, deleted_at)")
@@ -42,13 +39,13 @@ export default async function SessionViewPage({
   if (!classRow) notFound();
   if (error) throw new Error("Could not load weights.");
 
-  const exercises = program?.program_exercises ?? [];
+  const exercises = program.items.filter((item) => !item.is_removed);
   const members = (memberRows ?? [])
     .map((row) => row.clients)
     .filter((client) => !client.deleted_at)
     .sort(byName);
   const grid = new Map(
-    weights.map((weight) => [`${weight.client_id}:${weight.exercise_id}`, weight]),
+    weights.map((weight) => [`${weight.client_id}:${weight.item_id}`, weight]),
   );
   const today = todayIso();
 
@@ -105,15 +102,13 @@ export default async function SessionViewPage({
                 </th>
                 {exercises.map((row) => (
                   <th
-                    key={row.exercise_id}
+                    key={row.id}
                     scope="col"
                     className="min-w-44 px-3 py-3 text-center font-semibold text-gray-700 print:min-w-0 print:break-words print:px-1 print:py-0.5 print:text-[7pt] print:leading-tight"
                   >
                     {row.exercises.name}
                     <span className="block font-normal text-gray-600">
-                      {row.sets}×{row.reps}
-                      {row.rm_percentage !== null &&
-                        ` @${Number((row.rm_percentage * 100).toFixed(1))}%`}
+                      {formatPrescription(row.sets, row.reps, row.rm_percentage)}
                     </span>
                   </th>
                 ))}
@@ -136,13 +131,13 @@ export default async function SessionViewPage({
                       </Link>
                     </th>
                     {exercises.map((row) => {
-                      const weight = grid.get(`${client.id}:${row.exercise_id}`);
-                      if (!weight) return <td key={row.exercise_id} />;
+                      const weight = grid.get(`${client.id}:${row.id}`);
+                      if (!weight) return <td key={row.id} />;
                       const isOverride = weight.weight_source === "override";
 
                       return (
                         <td
-                          key={row.exercise_id}
+                          key={row.id}
                           className={`p-0 text-center ${
                             isOverride
                               ? "bg-amber-50 ring-2 ring-inset ring-amber-400 print:bg-transparent"

@@ -23,16 +23,20 @@ overriding system value values
   (3001, 'Zz Class A', 'GENERAL', 1, '09:00', '10:00'),
   (3002, 'Zz Class B', 'GENERAL', 2, '09:00', '10:00');
 
-insert into public.programs (id, class_id, name) overriding system value values
-  (4001, 3001, 'Program A'), (4002, 3002, 'Program B');
+insert into public.library_programs (id, code, name) overriding system value values
+  (4001, '', 'Program A'), (4002, '', 'Program B');
 
-insert into public.program_exercises
-  (program_id, exercise_id, order_index, sets, reps, rm_percentage, fallback_weight_kg) values
-  (4001, 2001, 1, 3, 10, 0.700, null),
-  (4001, 2002, 2, 3, 10, 0.600, 20),
-  (4001, 2003, 3, 3, 10, 0.600, null),
-  (4001, 2004, 4, 3, 10, null,  null),
-  (4002, 2001, 1, 3, 10, 0.500, null);
+select public.save_program_version(4001, 'Program A', '[
+  {"exercise_id": 2001, "sets": 3, "reps": "10", "rm_percentage": 0.700},
+  {"exercise_id": 2002, "sets": 3, "reps": "10", "rm_percentage": 0.600, "fallback_weight_kg": 20},
+  {"exercise_id": 2003, "sets": 3, "reps": "10", "rm_percentage": 0.600},
+  {"exercise_id": 2004, "sets": 3, "reps": "10"}
+]');
+select public.save_program_version(4002, 'Program B', '[
+  {"exercise_id": 2001, "sets": 3, "reps": "10", "rm_percentage": 0.500}
+]');
+select public.assign_program(3001, 4001, public.practice_today());
+select public.assign_program(3002, 4002, public.practice_today());
 
 insert into public.class_members (class_id, client_id) values
   (3001, 1001), (3001, 1002), (3002, 1001);

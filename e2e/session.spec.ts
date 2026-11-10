@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { admin, signInFully } from "./support";
+import { admin, programForClass, signInFully } from "./support";
 
 const unique = (name: string) => `${name}${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
@@ -17,25 +17,18 @@ async function arrangeClass(staffId: string) {
     })
     .select("id, name")
     .single();
-  const { data: program } = await admin
-    .from("programs")
-    .insert({ class_id: classRow!.id, name: "P" })
-    .select("id")
-    .single();
-
   const { data: exercises } = await admin
     .from("exercises")
     .insert(Array.from({ length: 12 }, (_, i) => ({ name: `Zz Lift ${i + 1} ${run}` })))
     .select("id, name");
   exercises!.sort((a, b) => a.id - b.id);
 
-  await admin.from("program_exercises").insert(
+  await programForClass(
+    classRow!.id,
     exercises!.map((exercise, i) => ({
-      program_id: program!.id,
       exercise_id: exercise.id,
-      order_index: i + 1,
       sets: 3,
-      reps: 10,
+      reps: "10",
       // The last is bodyweight; the one before has a starting weight.
       rm_percentage: i === 11 ? null : 0.7,
       fallback_weight_kg: i === 10 ? 20 : null,

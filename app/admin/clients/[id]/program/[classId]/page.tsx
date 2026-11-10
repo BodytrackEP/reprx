@@ -5,7 +5,9 @@ import { OverrideButton } from "@/components/override-button";
 import { WeightDisplay } from "@/components/weight-display";
 import { requireStaff } from "@/lib/auth";
 import { clientName } from "@/lib/clients";
+import { loadClassProgram } from "@/lib/class-program";
 import { DAY_NAMES } from "@/lib/constants";
+import { formatPrescription } from "@/lib/programs";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatTime, todayIso } from "@/lib/time";
 import { idSchema } from "@/lib/validation/catalog";
@@ -22,7 +24,7 @@ export default async function ClientProgramPage({
   const classId = classParam.data;
 
   const supabase = await createClient();
-  const [{ data: client }, { data: classRow }, { data: weights, error }, { data: program }] =
+  const [{ data: client }, { data: classRow }, { data: weights, error }, program] =
     await Promise.all([
       supabase
         .from("clients")
@@ -35,18 +37,12 @@ export default async function ClientProgramPage({
         .eq("id", classId)
         .maybeSingle(),
       supabase.rpc("effective_weights_for_client", { p_client_id: clientId }),
-      supabase
-        .from("programs")
-        .select("program_exercises(exercise_id, rest_seconds, notes, exercises(name))")
-        .eq("class_id", classId)
-        .maybeSingle(),
+      loadClassProgram(supabase, classId),
     ]);
   if (!client || !classRow) notFound();
   if (error) throw new Error("Could not load the program.");
 
-  const details = new Map(
-    (program?.program_exercises ?? []).map((row) => [row.exercise_id, row]),
-  );
+  const details = new Map(program.items.map((item) => [item.id, item]));
   const rows = weights.filter((weight) => weight.class_id === classId);
   const today = todayIso();
   const name = clientName(client);
@@ -78,13 +74,13 @@ export default async function ClientProgramPage({
 
       <div className="space-y-4">
         {rows.map((row, index) => {
-          const detail = details.get(row.exercise_id);
+          const detail = details.get(row.item_id);
           const exerciseName = detail?.exercises.name ?? "Exercise";
           const hasOverride = row.override_kg !== null;
 
           return (
             <div
-              key={row.exercise_id}
+              key={row.item_id}
               className={`rounded-xl border border-gray-200 bg-white p-5 shadow-sm ${
                 hasOverride ? "border-l-4 border-l-amber-400" : ""
               }`}
@@ -96,12 +92,7 @@ export default async function ClientProgramPage({
                     <h2 className="font-semibold text-gray-900">{exerciseName}</h2>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-                    <span>
-                      {row.sets} sets x {row.reps} reps
-                    </span>
-                    {row.rm_percentage !== null && (
-                      <span>@ {Number((row.rm_percentage * 100).toFixed(1))}% 1RM</span>
-                    )}
+                    <span>{formatPrescription(row.sets, row.reps, row.rm_percentage)}</span>
                     {detail?.rest_seconds ? <span>{detail.rest_seconds}s rest</span> : null}
                   </div>
                   {detail?.notes && (

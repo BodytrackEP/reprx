@@ -104,6 +104,31 @@ from generate_series(1, 8) as p (n)
 cross join lateral generate_series(1, 6 + (p.n % 3)) as slot
 on conflict (id) do nothing;
 
+-- A ninth class runs the same program as Monday AM Strength, except one starting weight.
+-- The conversion below merges the two into one shared library program and marks that
+-- row as the class's own.
+insert into public.classes
+  (id, name, category_code, day_of_week, start_time, end_time, location, max_capacity)
+overriding system value values
+  (900009, 'Thursday PM Strength', 'STRENGTH', 4, '16:00', '17:00', 'Studio A', 15)
+on conflict do nothing;
+
+insert into public.programs (id, class_id, name)
+overriding system value values (900009, 900009, 'Thursday PM Strength Program')
+on conflict do nothing;
+
+insert into public.program_exercises (
+  id, program_id, exercise_id, order_index, sets, reps,
+  rm_percentage, fallback_weight_kg, rest_seconds
+)
+overriding system value
+select id + 80, 900009, exercise_id, order_index, sets, reps, rm_percentage,
+       case when order_index = 3 then coalesce(fallback_weight_kg, 0) + 5 else fallback_weight_kg end,
+       rest_seconds
+from public.program_exercises
+where program_id = 900001
+on conflict (id) do nothing;
+
 -- Each client joins one class, and every third client joins a second.
 insert into public.class_members (class_id, client_id, added_by)
 select 900001 + (n % 8), 900000 + n, '00000000-0000-0000-0000-000000000900'
@@ -114,6 +139,36 @@ insert into public.class_members (class_id, client_id, added_by)
 select 900001 + ((n + 3) % 8), 900000 + n, '00000000-0000-0000-0000-000000000900'
 from generate_series(3, 39, 3) as n
 on conflict do nothing;
+
+insert into public.class_members (class_id, client_id, added_by)
+select 900009, 900000 + n, '00000000-0000-0000-0000-000000000900'
+from generate_series(2, 40, 6) as n
+on conflict do nothing;
+
+-- Convert the per-class programs into the library, exactly as the migration did.
+select private.convert_legacy_programs();
+
+-- Next term for Tuesday Cardiac Rehab: a copy of its program, queued four weeks out.
+do $$
+declare
+  v_program bigint;
+begin
+  if not exists (
+    select 1 from public.class_program_assignments
+    where class_id = 900002 and start_date > public.practice_today()
+  ) then
+    v_program := public.duplicate_program(
+      (select program_id from public.class_program_assignments
+       where class_id = 900002 order by start_date limit 1),
+      'Cardiac Rehab - Term 2'
+    );
+    update public.class_program_assignments
+    set end_date = public.practice_today() + 27
+    where class_id = 900002 and end_date is null;
+    perform public.assign_program(900002, v_program, public.practice_today() + 28);
+  end if;
+end;
+$$;
 
 -- About 70% of (client, program exercise) pairs have a test.
 insert into public.rm_tests

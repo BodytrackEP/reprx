@@ -6,11 +6,12 @@ select no_plan();
 grant usage on schema extensions to authenticated;
 grant execute on all functions in schema extensions to authenticated;
 
--- Start from nothing, whatever the seed added. All of this rolls back.
+-- Clients start empty so the counts below are exact. Classes and exercises are compared
+-- before and after, since programs reference them. All of this rolls back.
 delete from public.clients;
-delete from public.programs;
-delete from public.classes;
-delete from public.exercises;
+create temp table shared_before on commit drop as
+  select (select count(*)::int from public.classes) as classes,
+         (select count(*)::int from public.exercises) + 1 as exercises;
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000b', 'admin@test.invalid');
@@ -54,8 +55,10 @@ select results_eq('select client_id from public.rm_tests', 'values (1003::bigint
   'the real client''s test remains');
 select results_eq('select client_id from public.weight_overrides', 'values (1003::bigint)',
   'the real client''s override remains');
-select is((select count(*)::int from public.classes), 1, 'classes are untouched');
-select is((select count(*)::int from public.exercises), 1, 'exercises are untouched');
+select is((select count(*)::int from public.classes), (select classes + 1 from shared_before),
+  'classes are untouched');
+select is((select count(*)::int from public.exercises), (select exercises from shared_before),
+  'exercises are untouched');
 
 select is(
   (select count(*)::int from public.audit_log) - (select n from audit_before), 1,

@@ -19,10 +19,10 @@ insert into public.clients (id, first_name, last_name, is_test) overriding syste
   (1001, 'Zz-One', 'Test', true);
 insert into public.classes (id, name, category_code, day_of_week, start_time, end_time)
 overriding system value values (3001, 'Zz Class', 'GENERAL', 1, '09:00', '10:00');
-insert into public.programs (id, class_id, name) overriding system value values (4001, 3001, 'P');
 insert into public.exercises (id, name) overriding system value values (2001, 'Zz Press');
-insert into public.program_exercises (program_id, exercise_id, order_index, sets, reps)
-  values (4001, 2001, 1, 3, 10);
+insert into public.library_programs (id, code, name) overriding system value values (4001, '', 'P');
+select public.save_program_version(4001, 'P', '[{"exercise_id": 2001, "sets": 3, "reps": "10"}]');
+select public.assign_program(3001, 4001, public.practice_today());
 insert into public.class_members (class_id, client_id, added_by)
   values (3001, 1001, '00000000-0000-0000-0000-00000000000a');
 
@@ -42,7 +42,9 @@ select throws_ok(format('select * from public.%I', t), '42501', null, 'anon cann
 from unnest(array[
   'staff', 'clients', 'class_categories', 'classes', 'class_members', 'exercises',
   'programs', 'program_exercises', 'rm_tests', 'weight_overrides', 'app_settings',
-  'audit_log', 'effective_weights_v'
+  'audit_log', 'effective_weights_v', 'library_programs', 'program_versions',
+  'program_version_items', 'class_program_assignments', 'class_program_items',
+  'class_program_pushes'
 ]) t;
 
 select throws_ok('select * from public.effective_weights(3001)', '42501', null,

@@ -3,7 +3,8 @@ import { CategoryBadge } from "@/components/category-badge";
 import { requireStaff } from "@/lib/auth";
 import { DAY_NAMES, DAY_OPTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
-import { formatTime } from "@/lib/time";
+import { isCurrent } from "@/lib/programs";
+import { formatTime, todayIso } from "@/lib/time";
 import { NewClassButton } from "./class-form";
 
 const filterClass = "rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm";
@@ -21,7 +22,7 @@ export default async function ClassesPage({ searchParams }: PageProps<"/admin/cl
 
   let query = supabase
     .from("classes")
-    .select("*, programs(id), class_members(clients(deleted_at))")
+    .select("*, class_program_assignments(start_date, end_date), class_members(clients(deleted_at))")
     .order("day_of_week")
     .order("start_time");
   if (typeof category === "string" && category) query = query.eq("category_code", category);
@@ -31,6 +32,7 @@ export default async function ClassesPage({ searchParams }: PageProps<"/admin/cl
   const { data: classes, error } = await query;
   if (error) throw new Error("Could not load classes.");
 
+  const today = todayIso();
   const categoryOf = new Map(categories.map((item) => [item.code, item]));
 
   return (
@@ -103,7 +105,7 @@ export default async function ClassesPage({ searchParams }: PageProps<"/admin/cl
                   {item.max_capacity && `/${item.max_capacity}`} clients
                   {!item.is_active && " · Inactive"}
                 </span>
-                {item.programs ? (
+                {item.class_program_assignments.some((assignment) => isCurrent(assignment, today)) ? (
                   <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                     Program set
                   </span>

@@ -97,6 +97,114 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"class_program_assignments": {
+                  Row: {
+                    "class_id": number,"created_at": string,"created_by": string | null,"end_date": string | null,"id": number,"program_id": number,"start_date": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "class_id": number,"created_at"?: string,"created_by"?: string | null,"end_date"?: string | null,"id"?: never,"program_id": number,"start_date": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "class_id"?: number,"created_at"?: string,"created_by"?: string | null,"end_date"?: string | null,"id"?: never,"program_id"?: number,"start_date"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "class_program_assignments_class_id_fkey"
+      columns: ["class_id"]
+isOneToOne: false
+      referencedRelation: "classes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "class_program_assignments_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "class_program_assignments_program_id_fkey"
+      columns: ["program_id"]
+isOneToOne: false
+      referencedRelation: "library_programs"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"class_program_items": {
+                  Row: {
+                    "assignment_id": number,"created_at": string,"exercise_id": number,"fallback_weight_kg": number | null,"id": number,"is_customised": boolean,"is_removed": boolean,"item_key": string,"notes": string | null,"position": number,"reps": string,"rest_seconds": number | null,"rm_percentage": number | null,"sets": number,"source_version_id": number | null,"superset_group": number | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "assignment_id": number,"created_at"?: string,"exercise_id": number,"fallback_weight_kg"?: number | null,"id"?: never,"is_customised"?: boolean,"is_removed"?: boolean,"item_key"?: string,"notes"?: string | null,"position": number,"reps": string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets": number,"source_version_id"?: number | null,"superset_group"?: number | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "assignment_id"?: number,"created_at"?: string,"exercise_id"?: number,"fallback_weight_kg"?: number | null,"id"?: never,"is_customised"?: boolean,"is_removed"?: boolean,"item_key"?: string,"notes"?: string | null,"position"?: number,"reps"?: string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets"?: number,"source_version_id"?: number | null,"superset_group"?: number | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "class_program_items_assignment_id_fkey"
+      columns: ["assignment_id"]
+isOneToOne: false
+      referencedRelation: "class_program_assignments"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "class_program_items_assignment_id_fkey"
+      columns: ["assignment_id"]
+isOneToOne: false
+      referencedRelation: "effective_weights_v"
+      referencedColumns: ["assignment_id"]
+    },{
+      foreignKeyName: "class_program_items_exercise_id_fkey"
+      columns: ["exercise_id"]
+isOneToOne: false
+      referencedRelation: "exercises"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "class_program_items_source_version_id_fkey"
+      columns: ["source_version_id"]
+isOneToOne: false
+      referencedRelation: "program_versions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"class_program_pushes": {
+                  Row: {
+                    "applied_at": string,"applied_by": string | null,"assignment_id": number,"id": number,"rows_changed": NonNullable<Json>,"version_id": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "applied_at"?: string,"applied_by"?: string | null,"assignment_id": number,"id"?: never,"rows_changed"?: NonNullable<Json>,"version_id": number
+                  }
+                  Update: {
+                    "applied_at"?: string,"applied_by"?: string | null,"assignment_id"?: number,"id"?: never,"rows_changed"?: NonNullable<Json>,"version_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "class_program_pushes_applied_by_fkey"
+      columns: ["applied_by"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "class_program_pushes_assignment_id_fkey"
+      columns: ["assignment_id"]
+isOneToOne: false
+      referencedRelation: "class_program_assignments"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "class_program_pushes_assignment_id_fkey"
+      columns: ["assignment_id"]
+isOneToOne: false
+      referencedRelation: "effective_weights_v"
+      referencedColumns: ["assignment_id"]
+    },{
+      foreignKeyName: "class_program_pushes_version_id_fkey"
+      columns: ["version_id"]
+isOneToOne: false
+      referencedRelation: "program_versions"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"classes": {
                   Row: {
                     "category_code": string,"cliniko_group_appointment_ref": string | null,"created_at": string,"day_of_week": number,"end_time": string,"id": number,"is_active": boolean,"location": string | null,"max_capacity": number | null,"name": string,"start_time": string,"updated_at": string
@@ -151,6 +259,26 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"library_programs": {
+                  Row: {
+                    "code": string,"created_at": string,"current_version_id": number | null,"id": number,"name": string,"status": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "code": string,"created_at"?: string,"current_version_id"?: number | null,"id"?: never,"name": string,"status"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "code"?: string,"created_at"?: string,"current_version_id"?: number | null,"id"?: never,"name"?: string,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "library_programs_current_version_fkey"
+      columns: ["current_version_id"]
+isOneToOne: false
+      referencedRelation: "program_versions"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"program_exercises": {
                   Row: {
                     "created_at": string,"exercise_id": number,"fallback_weight_kg": number | null,"id": number,"notes": string | null,"order_index": number,"program_id": number,"reps": number,"rest_seconds": number | null,"rm_percentage": number | null,"sets": number,"updated_at": string
@@ -174,6 +302,58 @@ isOneToOne: false
       columns: ["program_id"]
 isOneToOne: false
       referencedRelation: "programs"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"program_version_items": {
+                  Row: {
+                    "created_at": string,"exercise_id": number,"fallback_weight_kg": number | null,"id": number,"item_key": string,"notes": string | null,"position": number,"reps": string,"rest_seconds": number | null,"rm_percentage": number | null,"sets": number,"superset_group": number | null,"version_id": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"exercise_id": number,"fallback_weight_kg"?: number | null,"id"?: never,"item_key": string,"notes"?: string | null,"position": number,"reps": string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets": number,"superset_group"?: number | null,"version_id": number
+                  }
+                  Update: {
+                    "created_at"?: string,"exercise_id"?: number,"fallback_weight_kg"?: number | null,"id"?: never,"item_key"?: string,"notes"?: string | null,"position"?: number,"reps"?: string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets"?: number,"superset_group"?: number | null,"version_id"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "program_version_items_exercise_id_fkey"
+      columns: ["exercise_id"]
+isOneToOne: false
+      referencedRelation: "exercises"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "program_version_items_version_id_fkey"
+      columns: ["version_id"]
+isOneToOne: false
+      referencedRelation: "program_versions"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"program_versions": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"id": number,"program_id": number,"version_no": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"id"?: never,"program_id": number,"version_no": number
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"id"?: never,"program_id"?: number,"version_no"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "program_versions_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "program_versions_program_id_fkey"
+      columns: ["program_id"]
+isOneToOne: false
+      referencedRelation: "library_programs"
       referencedColumns: ["id"]
     }
                   ]
@@ -286,7 +466,7 @@ isOneToOne: false
           Views: {
             "effective_weights_v": {
                   Row: {
-                    "calculated_kg": number | null,"class_id": number,"client_id": number,"effective_kg": number | null,"exercise_id": number,"fallback_kg": number | null,"latest_1rm_kg": number | null,"latest_test_date": string | null,"order_index": number,"override_kg": number | null,"override_reason": string | null,"override_review_date": string | null,"reps": number,"rm_percentage": number | null,"sets": number,"weight_source": string | null
+                    "assignment_id": number,"calculated_kg": number | null,"class_id": number,"client_id": number,"effective_kg": number | null,"exercise_id": number,"fallback_kg": number | null,"item_id": number,"item_key": string,"latest_1rm_kg": number | null,"latest_test_date": string | null,"order_index": number,"override_kg": number | null,"override_reason": string | null,"override_review_date": string | null,"reps": string,"rm_percentage": number | null,"sets": number,"superset_group": number | null,"weight_source": string | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -303,7 +483,7 @@ isOneToOne: false
       referencedRelation: "clients"
       referencedColumns: ["id"]
     },{
-      foreignKeyName: "program_exercises_exercise_id_fkey"
+      foreignKeyName: "class_program_items_exercise_id_fkey"
       columns: ["exercise_id"]
 isOneToOne: false
       referencedRelation: "exercises"
@@ -313,17 +493,29 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "add_class_members":
+            "add_class_item":
+{ Args: { "p_assignment_id": number,"p_exercise_id": number,"p_reps"?: string,"p_rm_percentage"?: number,"p_sets"?: number }; Returns: number
+                           },
+"add_class_members":
 { Args: { "p_allow_over_capacity"?: boolean,"p_class_id": number,"p_client_ids": (number)[] }; Returns: undefined
+                           },
+"assign_program":
+{ Args: { "p_class_id": number,"p_end_date"?: string,"p_program_id": number,"p_start_date": string }; Returns: number
+                           },
+"create_program":
+{ Args: { "p_name": string }; Returns: number
+                           },
+"duplicate_program":
+{ Args: { "p_name": string,"p_program_id": number }; Returns: number
                            },
 "effective_weights":
 { Args: { "p_class_id": number }; Returns: {
-              "calculated_kg": number,"client_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_reason": string,"override_review_date": string,"reps": number,"rm_percentage": number,"sets": number,"weight_source": string
+              "calculated_kg": number,"client_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_reason": string,"override_review_date": string,"reps": string,"rm_percentage": number,"sets": number,"superset_group": number,"weight_source": string
             }[]
                            },
 "effective_weights_for_client":
 { Args: { "p_client_id": number }; Returns: {
-              "calculated_kg": number,"class_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_reason": string,"override_review_date": string,"reps": number,"rm_percentage": number,"sets": number,"weight_source": string
+              "calculated_kg": number,"class_id": number,"effective_kg": number,"exercise_id": number,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_reason": string,"override_review_date": string,"reps": string,"rm_percentage": number,"sets": number,"superset_group": number,"weight_source": string
             }[]
                            },
 "end_override":
@@ -335,14 +527,23 @@ isOneToOne: false
 "is_staff":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"move_class_item":
+{ Args: { "p_direction": string,"p_item_id": number }; Returns: undefined
+                           },
 "move_client":
 { Args: { "p_allow_over_capacity"?: boolean,"p_client_id": number,"p_from_class": number,"p_to_class": number }; Returns: undefined
                            },
 "move_clients":
 { Args: { "p_allow_over_capacity"?: boolean,"p_client_ids": (number)[],"p_from_class": number,"p_to_class": number }; Returns: undefined
                            },
+"practice_today":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "purge_test_data":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"push_version_to_assignment":
+{ Args: { "p_assignment_id": number,"p_version_id": number }; Returns: Json
                            },
 "record_authenticator_reset":
 { Args: { "p_staff_id": string }; Returns: undefined
@@ -350,17 +551,32 @@ isOneToOne: false
 "record_invite_link":
 { Args: { "p_staff_id": string }; Returns: undefined
                            },
+"remove_class_item":
+{ Args: { "p_item_id": number }; Returns: undefined
+                           },
 "reorder_program_exercises":
 { Args: { "p_ids": (number)[],"p_program_id": number }; Returns: undefined
                            },
+"reset_class_item":
+{ Args: { "p_item_id": number }; Returns: undefined
+                           },
 "round_to_increment":
 { Args: { "p_increment": number,"p_kg": number }; Returns: number
+                           },
+"save_program_version":
+{ Args: { "p_items": Json,"p_name": string,"p_program_id": number }; Returns: Json
                            },
 "set_client_classes":
 { Args: { "p_allow_over_capacity"?: boolean,"p_class_ids": (number)[],"p_client_id": number }; Returns: undefined
                            },
 "set_override":
 { Args: { "p_client_id": number,"p_exercise_id": number,"p_reason": string,"p_review_date"?: string,"p_weight_kg": number }; Returns: number
+                           },
+"set_program_archived":
+{ Args: { "p_archived": boolean,"p_program_id": number }; Returns: undefined
+                           },
+"validate_supersets":
+{ Args: { "p_version_id": number }; Returns: undefined
                            }
           }
           Enums: {

@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { admin, signInFully } from "./support";
+import { admin, programForClass, signInFully } from "./support";
 
 const unique = (name: string) => `${name}${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
@@ -30,19 +30,9 @@ async function arrange(staffId: string) {
       })
       .select("id")
       .single();
-    const { data: program } = await admin
-      .from("programs")
-      .insert({ class_id: classRow!.id, name: "P" })
-      .select("id")
-      .single();
-    await admin.from("program_exercises").insert({
-      program_id: program!.id,
-      exercise_id: exercise!.id,
-      order_index: 1,
-      sets: 3,
-      reps: 10,
-      rm_percentage: percentage,
-    });
+    await programForClass(classRow!.id, [
+      { exercise_id: exercise!.id, sets: 3, reps: "10", rm_percentage: percentage },
+    ]);
     await admin
       .from("class_members")
       .insert({ class_id: classRow!.id, client_id: client!.id, added_by: staffId });

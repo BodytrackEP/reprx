@@ -9,6 +9,7 @@ import { isReviewDue } from "@/components/weight-display";
 import { requireStaff } from "@/lib/auth";
 import { clientName } from "@/lib/clients";
 import { DAY_NAMES } from "@/lib/constants";
+import { isCurrent } from "@/lib/programs";
 import { summariseRmTests } from "@/lib/rm";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatTime, todayIso } from "@/lib/time";
@@ -39,7 +40,7 @@ export default async function ClientDetailPage({
     supabase
       .from("clients")
       .select(
-        "*, class_members(classes(id, name, day_of_week, start_time, class_categories(label, colour), programs(id)))",
+        "*, class_members(classes(id, name, day_of_week, start_time, class_categories(label, colour), class_program_assignments(start_date, end_date)))",
       )
       .eq("id", clientId)
       .maybeSingle(),
@@ -167,7 +168,7 @@ export default async function ClientDetailPage({
                     {item.name}
                   </Link>
                 </h3>
-                {item.programs ? (
+                {item.class_program_assignments.some((assignment) => isCurrent(assignment, today)) ? (
                   <Link
                     href={`/admin/clients/${clientId}/program/${item.id}`}
                     className="mt-2 block text-xs font-medium text-indigo-600 hover:text-indigo-800"

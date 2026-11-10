@@ -1,6 +1,7 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { todayIso } from "../lib/time";
 
 export const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,6 +26,34 @@ export async function createStaff(role: "admin" | "ep") {
   if (staffError) throw staffError;
 
   return { id: data.user.id, email };
+}
+
+type ProgramItem = {
+  exercise_id: number;
+  sets: number;
+  reps: string;
+  rm_percentage?: number | null;
+  fallback_weight_kg?: number | null;
+};
+
+/** Creates a library program and assigns it to a class from today. */
+export async function programForClass(classId: number, items: ProgramItem[]) {
+  const name = `Zz Program ${randomUUID().slice(0, 8)}`;
+  const { data: programId, error } = await admin.rpc("create_program", { p_name: name });
+  if (error) throw error;
+  const { error: saveError } = await admin.rpc("save_program_version", {
+    p_program_id: programId,
+    p_name: name,
+    p_items: items,
+  });
+  if (saveError) throw saveError;
+  const { error: assignError } = await admin.rpc("assign_program", {
+    p_class_id: classId,
+    p_program_id: programId,
+    p_start_date: todayIso(),
+  });
+  if (assignError) throw assignError;
+  return { id: programId as number, name };
 }
 
 /** The link in the newest local email to this address with this subject. */
