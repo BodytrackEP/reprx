@@ -130,20 +130,36 @@ where program_id = 900001
 on conflict (id) do nothing;
 
 -- Each client joins one class, and every third client joins a second.
-insert into public.class_members (class_id, client_id, added_by)
-select 900001 + (n % 8), 900000 + n, '00000000-0000-0000-0000-000000000900'
+insert into public.class_members (class_id, client_id, added_by, added_at)
+select 900001 + (n % 8), 900000 + n, '00000000-0000-0000-0000-000000000900',
+       now() - interval '90 days'
 from generate_series(1, 40) as n
 on conflict do nothing;
 
-insert into public.class_members (class_id, client_id, added_by)
-select 900001 + ((n + 3) % 8), 900000 + n, '00000000-0000-0000-0000-000000000900'
+insert into public.class_members (class_id, client_id, added_by, added_at)
+select 900001 + ((n + 3) % 8), 900000 + n, '00000000-0000-0000-0000-000000000900',
+       now() - interval '90 days'
 from generate_series(3, 39, 3) as n
 on conflict do nothing;
 
-insert into public.class_members (class_id, client_id, added_by)
-select 900009, 900000 + n, '00000000-0000-0000-0000-000000000900'
+insert into public.class_members (class_id, client_id, added_by, added_at)
+select 900009, 900000 + n, '00000000-0000-0000-0000-000000000900',
+       now() - interval '90 days'
 from generate_series(2, 40, 6) as n
 on conflict do nothing;
+
+-- Classes have run for 120 days, so the converted assignments start then.
+update public.classes set created_at = now() - interval '120 days'
+where id between 900001 and 900009
+  and not exists (select 1 from public.class_program_assignments a where a.class_id = classes.id);
+
+-- Test Client 01 did 30 days of Thursday Chronic Disease before moving to their current class.
+insert into public.enrolments (class_id, client_id, start_date, end_date, opened_by, closed_by)
+select 900004, 900001, public.practice_today() - 120, public.practice_today() - 91,
+       '00000000-0000-0000-0000-000000000900', '00000000-0000-0000-0000-000000000900'
+where not exists (
+  select 1 from public.enrolments where client_id = 900001 and class_id = 900004
+);
 
 -- Convert the per-class programs into the library, exactly as the migration did.
 select private.convert_legacy_programs();

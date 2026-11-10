@@ -154,6 +154,12 @@ isOneToOne: false
       referencedRelation: "effective_weights_v"
       referencedColumns: ["assignment_id"]
     },{
+      foreignKeyName: "class_program_items_assignment_id_fkey"
+      columns: ["assignment_id"]
+isOneToOne: false
+      referencedRelation: "program_history_v"
+      referencedColumns: ["assignment_id"]
+    },{
       foreignKeyName: "class_program_items_exercise_id_fkey"
       columns: ["exercise_id"]
 isOneToOne: false
@@ -198,6 +204,12 @@ isOneToOne: false
       referencedRelation: "effective_weights_v"
       referencedColumns: ["assignment_id"]
     },{
+      foreignKeyName: "class_program_pushes_assignment_id_fkey"
+      columns: ["assignment_id"]
+isOneToOne: false
+      referencedRelation: "program_history_v"
+      referencedColumns: ["assignment_id"]
+    },{
       foreignKeyName: "class_program_pushes_version_id_fkey"
       columns: ["version_id"]
 isOneToOne: false
@@ -240,6 +252,44 @@ isOneToOne: false
                     {
       foreignKeyName: "clients_cliniko_linked_by_fkey"
       columns: ["cliniko_linked_by"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"enrolments": {
+                  Row: {
+                    "class_id": number,"client_id": number,"closed_by": string | null,"created_at": string,"end_date": string | null,"id": number,"opened_by": string | null,"start_date": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "class_id": number,"client_id": number,"closed_by"?: string | null,"created_at"?: string,"end_date"?: string | null,"id"?: never,"opened_by"?: string | null,"start_date": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "class_id"?: number,"client_id"?: number,"closed_by"?: string | null,"created_at"?: string,"end_date"?: string | null,"id"?: never,"opened_by"?: string | null,"start_date"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "enrolments_class_id_fkey"
+      columns: ["class_id"]
+isOneToOne: false
+      referencedRelation: "classes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "enrolments_client_id_fkey"
+      columns: ["client_id"]
+isOneToOne: false
+      referencedRelation: "clients"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "enrolments_closed_by_fkey"
+      columns: ["closed_by"]
+isOneToOne: false
+      referencedRelation: "staff"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "enrolments_opened_by_fkey"
+      columns: ["opened_by"]
 isOneToOne: false
       referencedRelation: "staff"
       referencedColumns: ["id"]
@@ -490,6 +540,38 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"program_history_v": {
+                  Row: {
+                    "assignment_id": number,"class_id": number,"class_name": string,"client_id": number,"enrolment_id": number,"from_date": string | null,"program_code": string,"program_id": number,"program_name": string,"to_date": string | null,"version_id": number,"version_no": number
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "class_program_assignments_program_id_fkey"
+      columns: ["program_id"]
+isOneToOne: false
+      referencedRelation: "library_programs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "class_program_pushes_version_id_fkey"
+      columns: ["version_id"]
+isOneToOne: false
+      referencedRelation: "program_versions"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "enrolments_class_id_fkey"
+      columns: ["class_id"]
+isOneToOne: false
+      referencedRelation: "classes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "enrolments_client_id_fkey"
+      columns: ["client_id"]
+isOneToOne: false
+      referencedRelation: "clients"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Functions: {
@@ -505,6 +587,27 @@ isOneToOne: false
 "clear_class_superset":
 { Args: { "p_item_ids": (number)[] }; Returns: undefined
                            },
+"client_program_history":
+{ Args: { "p_client_id": number }; Returns: {
+              "assignment_id": number,
+"class_id": number,
+"class_name": string,
+"client_id": number,
+"enrolment_id": number,
+"from_date": string | null,
+"program_code": string,
+"program_id": number,
+"program_name": string,
+"to_date": string | null,
+"version_id": number,
+"version_no": number
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "program_history_v"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "create_program":
 { Args: { "p_name": string }; Returns: number
                            },
@@ -548,6 +651,27 @@ isOneToOne: false
 "practice_today":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"program_client_history":
+{ Args: { "p_program_id": number }; Returns: {
+              "assignment_id": number,
+"class_id": number,
+"class_name": string,
+"client_id": number,
+"enrolment_id": number,
+"from_date": string | null,
+"program_code": string,
+"program_id": number,
+"program_name": string,
+"to_date": string | null,
+"version_id": number,
+"version_no": number
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "program_history_v"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "purge_test_data":
 { Args: Record<PropertyKey, never>; Returns: Json
                            },

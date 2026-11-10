@@ -4,6 +4,7 @@ import { CategoryBadge } from "@/components/category-badge";
 import { ClientChips } from "@/components/client-chips";
 import { ConfirmButton } from "@/components/confirm-button";
 import { OverrideButton } from "@/components/override-button";
+import { ProgramHistory } from "@/components/program-history";
 import { RmHistory } from "@/components/rm-history";
 import { isReviewDue } from "@/components/weight-display";
 import { requireStaff } from "@/lib/auth";
@@ -36,7 +37,13 @@ export default async function ClientDetailPage({
   const tab = (await searchParams).tab === "overrides" ? "overrides" : "rm";
 
   const supabase = await createClient();
-  const [{ data: client }, { data: classes }, { data: testRows }, { data: overrideRows }] = await Promise.all([
+  const [
+    { data: client },
+    { data: classes },
+    { data: testRows },
+    { data: overrideRows },
+    { data: history },
+  ] = await Promise.all([
     supabase
       .from("clients")
       .select(
@@ -60,6 +67,7 @@ export default async function ClientDetailPage({
       )
       .eq("client_id", clientId)
       .order("set_at", { ascending: false }),
+    supabase.rpc("client_program_history", { p_client_id: clientId }),
   ]);
   if (!client) notFound();
 
@@ -240,6 +248,11 @@ export default async function ClientDetailPage({
           ) : (
             <p className="text-sm text-gray-500">No active overrides.</p>
           )}
+        </section>
+
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Program History</h2>
+          <ProgramHistory rows={history ?? []} />
         </section>
 
         <section>
