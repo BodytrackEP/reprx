@@ -159,3 +159,38 @@ test("a future date is a live plan, and the history links to recorded weights", 
     await expect(record).toContainText("50 kg");
   }
 });
+
+test("sets, reps and % change from today's session, and past records keep theirs", async ({
+  page,
+}) => {
+  const staff = await signInFully(page, "ep");
+  const { classId, exercise, fullName } = await arrange(staff.id);
+  const lastWeek = addDays(todayIso(), -7);
+  await recordPastSession(classId, lastWeek);
+
+  await page.goto(`/admin/sessions/${classId}`);
+  await page.getByRole("button", { name: `Change sets and reps for ${exercise.name}` }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Reps").fill("6");
+  await dialog.getByLabel("% 1RM").fill("80");
+  await dialog.getByRole("button", { name: "Save" }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("rowheader").filter({ hasText: exercise.name })).toContainText(
+    "3 × 6 @80%",
+  );
+  await expect(page.locator("tbody td").first()).toContainText("80 kg");
+
+  // The class program shows the row as customised.
+  const [item] = await sql(
+    "select reps, is_customised from public.class_program_items i join public.class_program_assignments a on a.id = i.assignment_id where a.class_id = $1",
+    [classId],
+  );
+  expect(item).toEqual({ reps: "6", is_customised: true });
+
+  await page.goto(`/admin/sessions/${classId}?date=${lastWeek}`);
+  await expect(page.getByRole("rowheader").filter({ hasText: exercise.name })).toContainText(
+    "3 × 10 @50%",
+  );
+  await expect(recordCell(page, exercise.name, fullName)).toContainText("50 kg");
+});

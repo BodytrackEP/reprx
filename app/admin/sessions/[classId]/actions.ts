@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { type FormState, requireAdmin } from "@/lib/auth";
+import { type FormState, requireAdmin, requireStaff } from "@/lib/auth";
 import { dbErrorMessage } from "@/lib/db-errors";
+import { toFraction } from "@/lib/programs";
 import { createClient } from "@/lib/supabase/server";
 import { idSchema } from "@/lib/validation/catalog";
+import { classPrescriptionSchema } from "@/lib/validation/programs";
 
 const correctionSchema = z.object({
   rowId: idSchema,
@@ -39,4 +41,33 @@ export async function correctSnapshot(_: FormState, formData: FormData): Promise
 
   revalidatePath(`/admin/sessions/${classId}`);
   return { success: "Corrected." };
+}
+
+/**
+ * Changes sets, reps and % on this class's copy of the program, for progression mid-block.
+ * The database marks the row customised, so a later library push leaves it alone; past
+ * sessions keep their recorded values.
+ */
+export async function updatePrescription(_: FormState, formData: FormData): Promise<FormState> {
+  await requireStaff();
+
+  const parsed = classPrescriptionSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const { id, classId, sets, reps, rmPercent } = parsed.data;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("class_program_items")
+    .update({
+      sets,
+      reps,
+      rm_percentage: rmPercent === undefined ? null : toFraction(rmPercent),
+    })
+    .eq("id", id)
+    .select("id");
+  if (error || data.length === 0) return { error: "Could not save the change." };
+
+  revalidatePath(`/admin/sessions/${classId}`);
+  revalidatePath(`/admin/classes/${classId}`, "layout");
+  return { success: "Saved." };
 }

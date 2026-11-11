@@ -42,6 +42,15 @@ export const classItemSchema = z.object({
   ...prescription,
 });
 
+/** Sets, reps and % only, as changed from the session view. */
+export const classPrescriptionSchema = z.object({
+  id: idSchema,
+  classId: idSchema,
+  sets: prescription.sets,
+  reps: prescription.reps,
+  rmPercent: prescription.rmPercent,
+});
+
 export const assignSchema = z
   .object({
     classId: idSchema,

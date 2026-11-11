@@ -4,6 +4,7 @@ import { WeightDisplay } from "@/components/weight-display";
 import { formatPrescription } from "@/lib/programs";
 import { supersetStyles } from "@/lib/supersets";
 import { CorrectButton } from "./correct-button";
+import { PrescriptionButton } from "./prescription-button";
 
 export type GridCell = {
   clientId: number;
@@ -21,6 +22,8 @@ export type GridCell = {
   weightSource: string;
   overrideNote: string | null;
   overrideReviewDate: string | null;
+  /** The class program row, on a live session. */
+  itemId?: number;
   snapshotRowId?: number;
   editedAt?: string | null;
 };
@@ -97,7 +100,19 @@ export function SessionGrid({
                 >
                   {exercise.exerciseName}
                   <span className="block font-normal text-gray-600">
-                    {formatPrescription(exercise.sets, exercise.reps, exercise.rmPercentage)}
+                    {mode === "live" && exercise.itemId ? (
+                      <PrescriptionButton
+                        itemId={exercise.itemId}
+                        classId={classId}
+                        exerciseName={exercise.exerciseName}
+                        sets={exercise.sets}
+                        reps={exercise.reps}
+                        rmPercentage={exercise.rmPercentage}
+                        label={formatPrescription(exercise.sets, exercise.reps, exercise.rmPercentage)}
+                      />
+                    ) : (
+                      formatPrescription(exercise.sets, exercise.reps, exercise.rmPercentage)
+                    )}
                   </span>
                 </th>
                 {clients.map((client) => {

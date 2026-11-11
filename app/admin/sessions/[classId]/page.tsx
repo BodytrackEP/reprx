@@ -58,6 +58,7 @@ export default async function SessionViewPage({
     cells = data.map((row) => ({
       clientId: row.client_id,
       itemKey: row.item_key,
+      itemId: row.item_id,
       exerciseId: row.exercise_id,
       exerciseName: row.exercise_name,
       position: row.order_index,
@@ -226,7 +227,7 @@ export default async function SessionViewPage({
 
       <p className="mt-4 text-gray-600 print:hidden">
         {mode === "live"
-          ? "Select a weight to adjust it for that client. Amber weights are EP overrides; a note describes the exercise change and follows the client to every class with that exercise."
+          ? "Select a weight to adjust it for that client, or the sets and reps under an exercise to change them for the class. Amber weights are EP overrides; a note describes the exercise change and follows the client to every class with that exercise."
           : staff.isAdmin && locked
             ? "Past sessions are never recalculated. Select a weight to correct a recording error; corrections are audited."
             : "Past sessions are never recalculated."}
