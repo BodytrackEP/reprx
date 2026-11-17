@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { type ExerciseOption, ExercisePicker } from "@/components/exercise-picker";
 import { Modal, primaryButton, secondaryButton } from "@/components/modal";
+import { ColourSelect } from "@/components/colour-select";
 import { DragHandle, SortableList } from "@/components/sortable-list";
+import { colourFill } from "@/lib/colours";
 import { formatPrescription } from "@/lib/programs";
 import { isGroupable, normaliseGroups, supersetStyles } from "@/lib/supersets";
 import { saveProgram } from "../actions";
@@ -21,6 +23,7 @@ export type EditorRow = {
   restSeconds: string;
   notes: string;
   supersetGroup?: number;
+  colour: string;
 };
 
 const smallInput = "w-16 rounded border border-gray-300 px-2 py-1 text-center text-sm";
@@ -117,6 +120,7 @@ export function ProgramEditor({
           restSeconds: row.restSeconds,
           notes: row.notes,
           supersetGroup: row.supersetGroup,
+          colour: row.colour,
         })),
       });
       if (result.success) {
@@ -159,6 +163,7 @@ export function ProgramEditor({
                     fallbackKg: "",
                     restSeconds: "60",
                     notes: "",
+                    colour: "",
                   },
                 ]);
                 close();
@@ -209,7 +214,10 @@ export function ProgramEditor({
                 />
                 <span className="w-6 text-sm font-medium text-gray-500">{index + 1}</span>
                 <div className="min-w-40 flex-1">
-                  <h2 className="text-sm font-semibold text-gray-900">{row.exerciseName}</h2>
+                  <h2 className={`inline-block rounded text-sm font-semibold text-gray-900 ${
+                    colourFill(row.colour) ? `${colourFill(row.colour)} px-2 py-0.5` : ""}`}>
+                    {row.exerciseName}
+                  </h2>
                   <p className="text-xs text-gray-500">
                     {formatPrescription(
                       Number(row.sets) || 0,
@@ -249,6 +257,8 @@ export function ProgramEditor({
                       placeholder="—" value={row.restSeconds}
                       onChange={(event) => update(row.uid, "restSeconds", event.target.value)} />
                   </label>
+                  <ColourSelect exerciseName={row.exerciseName} value={row.colour}
+                    onChange={(event) => update(row.uid, "colour", event.target.value)} />
                 </div>
                 <div className="flex items-center">
                   <button type="button" className={iconButton} disabled={index === 0}

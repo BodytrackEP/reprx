@@ -17,6 +17,7 @@ export type ClassProgramItem = {
   rest_seconds: number | null;
   notes: string | null;
   superset_group: number | null;
+  colour: string | null;
   is_customised: boolean;
   is_removed: boolean;
   source_version_id: number | null;

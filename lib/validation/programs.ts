@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { colourSchema } from "../colours";
 import { idSchema, optionalNumber } from "./catalog";
 
 const blankToUndefined = (value: unknown) =>
@@ -19,6 +20,7 @@ const prescription = {
   fallbackKg: optionalNumber(z.number().min(0, "Weight can't be negative.").max(9999)),
   restSeconds: optionalNumber(z.number().int().min(0, "Rest can't be negative.")),
   notes: z.preprocess(blankToUndefined, z.string().trim().max(200).optional()),
+  colour: colourSchema,
 };
 
 export const programItemSchema = z.object({

@@ -89,7 +89,8 @@ export async function updateClassItem(_: FormState, formData: FormData): Promise
 
   const parsed = classItemSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const { id, classId, sets, reps, rmPercent, fallbackKg, restSeconds, notes } = parsed.data;
+  const { id, classId, sets, reps, rmPercent, fallbackKg, restSeconds, notes, colour } =
+    parsed.data;
 
   // The database marks the row customised if anything actually changed.
   const supabase = await createClient();
@@ -102,6 +103,7 @@ export async function updateClassItem(_: FormState, formData: FormData): Promise
       fallback_weight_kg: fallbackKg ?? null,
       rest_seconds: restSeconds ?? null,
       notes: notes ?? null,
+      colour: colour ?? null,
     })
     .eq("id", id);
   if (error) return { error: "Could not save this row." };

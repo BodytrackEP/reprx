@@ -87,6 +87,7 @@ export default async function ProgramPage({
     restSeconds: text(item.rest_seconds),
     notes: item.notes ?? "",
     supersetGroup: item.superset_group ?? undefined,
+    colour: item.colour ?? "",
   }));
 
   return (

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { OverrideButton } from "@/components/override-button";
 import { WeightDisplay } from "@/components/weight-display";
+import { colourFill } from "@/lib/colours";
 import { formatPrescription } from "@/lib/programs";
 import { supersetStyles } from "@/lib/supersets";
 import { CorrectButton } from "./correct-button";
@@ -13,6 +14,7 @@ export type GridCell = {
   exerciseName: string;
   position: number;
   supersetGroup: number | null;
+  colour: string | null;
   sets: number;
   reps: string;
   rmPercentage: number | null;
@@ -94,9 +96,10 @@ export function SessionGrid({
               >
                 <th
                   scope="row"
+                  data-colour={exercise.colour ?? ""}
                   className={`sticky left-0 z-10 border-b border-r border-gray-200 px-4 py-3 text-left font-medium text-gray-900 print:static print:px-1 print:py-0.5 print:text-[8pt] print:leading-tight ${
-                    style ? `border-l-8 ${style.band} ${style.fill}` : "bg-white"
-                  }`}
+                    style ? `border-l-8 ${style.band}` : ""
+                  } ${colourFill(exercise.colour) ?? style?.fill ?? "bg-white"}`}
                 >
                   {exercise.exerciseName}
                   <span className="block font-normal text-gray-600">

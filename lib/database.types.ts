@@ -131,14 +131,14 @@ isOneToOne: false
                   ]
                 },"class_program_items": {
                   Row: {
-                    "assignment_id": number,"created_at": string,"exercise_id": number,"fallback_weight_kg": number | null,"id": number,"is_customised": boolean,"is_removed": boolean,"item_key": string,"notes": string | null,"position": number,"reps": string,"rest_seconds": number | null,"rm_percentage": number | null,"sets": number,"source_version_id": number | null,"superset_group": number | null,"updated_at": string
+                    "assignment_id": number,"colour": string | null,"created_at": string,"exercise_id": number,"fallback_weight_kg": number | null,"id": number,"is_customised": boolean,"is_removed": boolean,"item_key": string,"notes": string | null,"position": number,"reps": string,"rest_seconds": number | null,"rm_percentage": number | null,"sets": number,"source_version_id": number | null,"superset_group": number | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "assignment_id": number,"created_at"?: string,"exercise_id": number,"fallback_weight_kg"?: number | null,"id"?: never,"is_customised"?: boolean,"is_removed"?: boolean,"item_key"?: string,"notes"?: string | null,"position": number,"reps": string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets": number,"source_version_id"?: number | null,"superset_group"?: number | null,"updated_at"?: string
+                    "assignment_id": number,"colour"?: string | null,"created_at"?: string,"exercise_id": number,"fallback_weight_kg"?: number | null,"id"?: never,"is_customised"?: boolean,"is_removed"?: boolean,"item_key"?: string,"notes"?: string | null,"position": number,"reps": string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets": number,"source_version_id"?: number | null,"superset_group"?: number | null,"updated_at"?: string
                   }
                   Update: {
-                    "assignment_id"?: number,"created_at"?: string,"exercise_id"?: number,"fallback_weight_kg"?: number | null,"id"?: never,"is_customised"?: boolean,"is_removed"?: boolean,"item_key"?: string,"notes"?: string | null,"position"?: number,"reps"?: string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets"?: number,"source_version_id"?: number | null,"superset_group"?: number | null,"updated_at"?: string
+                    "assignment_id"?: number,"colour"?: string | null,"created_at"?: string,"exercise_id"?: number,"fallback_weight_kg"?: number | null,"id"?: never,"is_customised"?: boolean,"is_removed"?: boolean,"item_key"?: string,"notes"?: string | null,"position"?: number,"reps"?: string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets"?: number,"source_version_id"?: number | null,"superset_group"?: number | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -357,14 +357,14 @@ isOneToOne: false
                   ]
                 },"program_version_items": {
                   Row: {
-                    "created_at": string,"exercise_id": number,"fallback_weight_kg": number | null,"id": number,"item_key": string,"notes": string | null,"position": number,"reps": string,"rest_seconds": number | null,"rm_percentage": number | null,"sets": number,"superset_group": number | null,"version_id": number
+                    "colour": string | null,"created_at": string,"exercise_id": number,"fallback_weight_kg": number | null,"id": number,"item_key": string,"notes": string | null,"position": number,"reps": string,"rest_seconds": number | null,"rm_percentage": number | null,"sets": number,"superset_group": number | null,"version_id": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"exercise_id": number,"fallback_weight_kg"?: number | null,"id"?: never,"item_key": string,"notes"?: string | null,"position": number,"reps": string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets": number,"superset_group"?: number | null,"version_id": number
+                    "colour"?: string | null,"created_at"?: string,"exercise_id": number,"fallback_weight_kg"?: number | null,"id"?: never,"item_key": string,"notes"?: string | null,"position": number,"reps": string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets": number,"superset_group"?: number | null,"version_id": number
                   }
                   Update: {
-                    "created_at"?: string,"exercise_id"?: number,"fallback_weight_kg"?: number | null,"id"?: never,"item_key"?: string,"notes"?: string | null,"position"?: number,"reps"?: string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets"?: number,"superset_group"?: number | null,"version_id"?: number
+                    "colour"?: string | null,"created_at"?: string,"exercise_id"?: number,"fallback_weight_kg"?: number | null,"id"?: never,"item_key"?: string,"notes"?: string | null,"position"?: number,"reps"?: string,"rest_seconds"?: number | null,"rm_percentage"?: number | null,"sets"?: number,"superset_group"?: number | null,"version_id"?: number
                   }
                   Relationships: [
                     {
@@ -545,14 +545,14 @@ isOneToOne: false
                   ]
                 },"session_snapshot_rows": {
                   Row: {
-                    "calculated_kg": number | null,"client_id": number,"created_at": string,"edited_at": string | null,"edited_by": string | null,"effective_kg": number | null,"exercise_id": number,"exercise_name": string,"id": number,"is_override": boolean,"item_key": string,"occurrence_id": number,"override_note": string | null,"position": number,"program_version_id": number | null,"reps": string,"rm_percentage": number | null,"rm_result_id": number | null,"sets": number,"superset_group": number | null,"updated_at": string,"weight_source": string
+                    "calculated_kg": number | null,"client_id": number,"colour": string | null,"created_at": string,"edited_at": string | null,"edited_by": string | null,"effective_kg": number | null,"exercise_id": number,"exercise_name": string,"id": number,"is_override": boolean,"item_key": string,"occurrence_id": number,"override_note": string | null,"position": number,"program_version_id": number | null,"reps": string,"rm_percentage": number | null,"rm_result_id": number | null,"sets": number,"superset_group": number | null,"updated_at": string,"weight_source": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "calculated_kg"?: number | null,"client_id": number,"created_at"?: string,"edited_at"?: string | null,"edited_by"?: string | null,"effective_kg"?: number | null,"exercise_id": number,"exercise_name": string,"id"?: never,"is_override": boolean,"item_key": string,"occurrence_id": number,"override_note"?: string | null,"position": number,"program_version_id"?: number | null,"reps": string,"rm_percentage"?: number | null,"rm_result_id"?: number | null,"sets": number,"superset_group"?: number | null,"updated_at"?: string,"weight_source": string
+                    "calculated_kg"?: number | null,"client_id": number,"colour"?: string | null,"created_at"?: string,"edited_at"?: string | null,"edited_by"?: string | null,"effective_kg"?: number | null,"exercise_id": number,"exercise_name": string,"id"?: never,"is_override": boolean,"item_key": string,"occurrence_id": number,"override_note"?: string | null,"position": number,"program_version_id"?: number | null,"reps": string,"rm_percentage"?: number | null,"rm_result_id"?: number | null,"sets": number,"superset_group"?: number | null,"updated_at"?: string,"weight_source": string
                   }
                   Update: {
-                    "calculated_kg"?: number | null,"client_id"?: number,"created_at"?: string,"edited_at"?: string | null,"edited_by"?: string | null,"effective_kg"?: number | null,"exercise_id"?: number,"exercise_name"?: string,"id"?: never,"is_override"?: boolean,"item_key"?: string,"occurrence_id"?: number,"override_note"?: string | null,"position"?: number,"program_version_id"?: number | null,"reps"?: string,"rm_percentage"?: number | null,"rm_result_id"?: number | null,"sets"?: number,"superset_group"?: number | null,"updated_at"?: string,"weight_source"?: string
+                    "calculated_kg"?: number | null,"client_id"?: number,"colour"?: string | null,"created_at"?: string,"edited_at"?: string | null,"edited_by"?: string | null,"effective_kg"?: number | null,"exercise_id"?: number,"exercise_name"?: string,"id"?: never,"is_override"?: boolean,"item_key"?: string,"occurrence_id"?: number,"override_note"?: string | null,"position"?: number,"program_version_id"?: number | null,"reps"?: string,"rm_percentage"?: number | null,"rm_result_id"?: number | null,"sets"?: number,"superset_group"?: number | null,"updated_at"?: string,"weight_source"?: string
                   }
                   Relationships: [
                     {
@@ -816,7 +816,7 @@ isOneToOne: false
                            },
 "effective_weights_at":
 { Args: { "p_class_id": number,"p_date": string }; Returns: {
-              "calculated_kg": number,"client_id": number,"effective_kg": number,"exercise_id": number,"exercise_name": string,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_note": string,"override_review_date": string,"program_version_id": number,"reps": string,"rm_percentage": number,"rm_result_id": number,"sets": number,"superset_group": number,"weight_source": string
+              "calculated_kg": number,"client_id": number,"colour": string,"effective_kg": number,"exercise_id": number,"exercise_name": string,"fallback_kg": number,"item_id": number,"item_key": string,"latest_1rm_kg": number,"latest_test_date": string,"order_index": number,"override_kg": number,"override_note": string,"override_review_date": string,"program_version_id": number,"reps": string,"rm_percentage": number,"rm_result_id": number,"sets": number,"superset_group": number,"weight_source": string
             }[]
                            },
 "effective_weights_for_client":

@@ -2,9 +2,11 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { type ExerciseOption, ExercisePicker } from "@/components/exercise-picker";
+import { ColourSelect } from "@/components/colour-select";
 import { SubmitButton } from "@/components/form";
 import { Modal, primaryButton, secondaryButton } from "@/components/modal";
 import { type DragHandleProps, DragHandle, SortableList } from "@/components/sortable-list";
+import { colourFill } from "@/lib/colours";
 import { formatPrescription, toPercent } from "@/lib/programs";
 import { isGroupable, type SupersetStyle, supersetStyles } from "@/lib/supersets";
 import {
@@ -26,6 +28,7 @@ type Row = {
   rest_seconds: number | null;
   notes: string | null;
   superset_group: number | null;
+  colour: string | null;
   is_customised: boolean;
   source_version_id: number | null;
   exercises: { name: string; muscle_group: string | null; equipment: string | null };
@@ -91,7 +94,10 @@ export function ClassItemRow({
         <input type="checkbox" aria-label={`Select ${name}`} checked={selected} onChange={onToggle} />
         <span className="w-6 text-sm font-medium text-gray-500">{position}</span>
         <div className="min-w-40 flex-1">
-          <h2 className="text-sm font-semibold text-gray-900">{name}</h2>
+          <h2 className={`inline-block rounded text-sm font-semibold text-gray-900 ${
+            colourFill(row.colour) ? `${colourFill(row.colour)} px-2 py-0.5` : ""}`}>
+            {name}
+          </h2>
           <p className="text-xs text-gray-500">
             {formatPrescription(row.sets, row.reps, row.rm_percentage)}
           </p>
@@ -128,6 +134,7 @@ export function ClassItemRow({
             <input className={smallInput} name="restSeconds" type="number" min={0} step={15}
               placeholder="—" defaultValue={row.rest_seconds ?? ""} />
           </label>
+          <ColourSelect exerciseName={name} name="colour" defaultValue={row.colour ?? ""} />
         </div>
         <div className="flex items-center">
           <button type="button" className={iconButton} disabled={isFirst || pending}

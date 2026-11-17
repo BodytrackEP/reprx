@@ -86,6 +86,7 @@ export async function saveProgram(input: {
       rest_seconds: item.restSeconds ?? null,
       notes: item.notes ?? null,
       superset_group: item.supersetGroup ?? null,
+      colour: item.colour ?? null,
     })),
   });
   if (error) return { error: dbErrorMessage(error, "Could not save the program.") };

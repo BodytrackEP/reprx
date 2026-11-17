@@ -1,6 +1,6 @@
 # RepRx: development, shipping and deployment
 
-How the development machine is set up, and the routine for building, testing and deploying a change. Last checked 2026-11-11, at 26 migrations.
+How the development machine is set up, and the routine for building, testing and deploying a change. Last checked 2026-11-17, at 27 migrations.
 
 ## 1. What's installed
 
