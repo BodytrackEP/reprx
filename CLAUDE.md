@@ -56,7 +56,7 @@ select id, 'Your Name', 'admin' from auth.users where email = 'you@example.com';
 
 ## Cut-over: before any real client is entered (§7, D2)
 
-Real clients go only into prod, so this must happen first. **Stop and confirm with the owner before doing it.**
+Real clients go only into prod, so this must happen first. **Stop and confirm with the owner before doing it.** The full step-by-step procedure (email domain, Supabase and Vercel settings, checks, and the two-site release routine) is in [docs/PRODUCTION_DEPLOY.md](docs/PRODUCTION_DEPLOY.md).
 
 1. Create the prod Supabase project (**Sydney, `ap-southeast-2`**, Pro plan) and the Vercel production deployment. The region is chosen at creation, so check it before going further: `pnpm exec supabase projects list`. The existing test project is in Singapore and must never hold real clients.
 2. Run migrations with `supabase db push`, **without the seed**.
