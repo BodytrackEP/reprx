@@ -11,7 +11,7 @@ How the development machine is set up, and the routine for building, testing and
 | Git | 2.56.0 | Version control, connected to GitHub |
 | Docker Desktop (with WSL2) | 29.9.2 | Runs a complete local copy of Supabase |
 | Supabase CLI | 2.122.0 | Installed inside the project, so you run it as `pnpm exec supabase …` |
-| Next.js | 16.4.3 | The web framework |
+| Next.js | 16.4.5 | The web framework |
 | Playwright + Chromium | 1.64.1 | Browser tests, using the Chromium build in `%LOCALAPPDATA%\ms-playwright` |
 
 **Project folder:** `C:\temp\Harth`
