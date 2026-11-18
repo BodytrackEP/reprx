@@ -77,13 +77,26 @@ export async function loadSession(
   }
 
   const clientIds = [...new Set(cells.map((cell) => cell.clientId))];
-  const { data: clientRows } = clientIds.length
-    ? await supabase
-        .from("clients")
-        .select("id, first_name, last_name, preferred_name")
-        .in("id", clientIds)
-    : { data: [] };
-  const people = [...(clientRows ?? [])].sort(byName);
+  const [{ data: clientRows }, { data: members }] = await Promise.all([
+    clientIds.length
+      ? supabase
+          .from("clients")
+          .select("id, first_name, last_name, preferred_name")
+          .in("id", clientIds)
+      : Promise.resolve({ data: [] }),
+    supabase.from("class_members").select("client_id, position").eq("class_id", classId),
+  ]);
+  // The class's chosen order first; anyone without a place (new members, or past members on
+  // an old record) follows by name.
+  const place = new Map(
+    (members ?? []).flatMap((member) =>
+      member.position === null ? [] : [[member.client_id, member.position] as const],
+    ),
+  );
+  const people = [...(clientRows ?? [])].sort(
+    (a, b) =>
+      (place.get(a.id) ?? Infinity) - (place.get(b.id) ?? Infinity) || byName(a, b),
+  );
   const shortNames = abbreviateNames(people);
   const clients = people.map((person) => ({
     id: person.id,

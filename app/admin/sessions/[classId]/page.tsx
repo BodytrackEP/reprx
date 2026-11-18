@@ -15,6 +15,8 @@ import {
 } from "@/lib/time";
 import { idSchema } from "@/lib/validation/catalog";
 import { PrintButton } from "./print-button";
+import { byName, clientName } from "@/lib/clients";
+import { ClientOrderButton } from "./client-order-button";
 import { loadSession } from "./load";
 import { SessionGrid } from "./session-grid";
 
@@ -44,7 +46,24 @@ export default async function SessionViewPage({
 
   // Opening (or printing) today's session takes or refreshes its snapshot.
   if (date === today) await supabase.rpc("snapshot_today", { p_class_id: classId });
-  const { mode, cells, occurrence, clients } = await loadSession(supabase, classId, date, today);
+  const [{ mode, cells, occurrence, clients }, { data: memberRows }] = await Promise.all([
+    loadSession(supabase, classId, date, today),
+    supabase
+      .from("class_members")
+      .select("client_id, position, clients(first_name, last_name, preferred_name, deleted_at)")
+      .eq("class_id", classId),
+  ]);
+  // Current members, in the class's order, for the client-order editor.
+  const members = [...(memberRows ?? [])].sort(
+    (a, b) =>
+      (a.position ?? Infinity) - (b.position ?? Infinity) || byName(a.clients, b.clients),
+  );
+  const orderMembers = members
+    .filter((member) => !member.clients.deleted_at)
+    .map((member) => ({ id: member.client_id, name: clientName(member.clients) }));
+  const hiddenIds = members
+    .filter((member) => member.clients.deleted_at)
+    .map((member) => member.client_id);
 
   const locked = occurrence?.status === "locked";
   const runsOnDate = dayOfWeek(date) === classRow.day_of_week;
@@ -114,6 +133,10 @@ export default async function SessionViewPage({
             </button>
           </form>
           <PrintButton />
+          {orderMembers.length > 1 && (
+            <ClientOrderButton classId={classId} members={orderMembers} hiddenIds={hiddenIds}
+              className={navLink} />
+          )}
           {cells.length > 0 && (
             <Link href={`/admin/sessions/${classId}/take-home?date=${date}`} className={navLink}>
               Take-home sheets

@@ -1,6 +1,6 @@
 # RepRx: deploying to new production servers
 
-How to stand up a new, separate copy of RepRx (a new Vercel web project and a new Supabase database) for real use, then keep it updated alongside the test site. Written 2026-11-17, at 27 migrations.
+How to stand up a new, separate copy of RepRx (a new Vercel web project and a new Supabase database) for real use, then keep it updated alongside the test site. Written 2026-11-17, at 28 migrations.
 
 The current site (`reprx-iainroberts1980-ui.vercel.app` + Supabase project `hjmwswejuklkjexbrudw` in Singapore) stays as the **test** site. Never delete it, and never put real clients in it.
 
@@ -64,13 +64,13 @@ The CLI talks to one **linked** project at a time, so you switch the link to pro
 # 1. Point the CLI at production. It asks for the prod database password.
 pnpm exec supabase link --project-ref <PROD_REF>
 
-# 2. Dry run. It should list all 27 migrations and NO seed.
+# 2. Dry run. It should list all 28 migrations and NO seed.
 pnpm exec supabase db push --linked --dry-run
 
 # 3. Apply.
 pnpm exec supabase db push --linked
 
-# 4. Confirm all 27 are recorded.
+# 4. Confirm all 28 are recorded.
 pnpm exec supabase migration list --linked
 
 # 5. IMPORTANT: point the CLI back at the test project.

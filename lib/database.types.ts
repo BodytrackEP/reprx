@@ -67,14 +67,14 @@ export type Database = {
                   ]
                 },"class_members": {
                   Row: {
-                    "added_at": string,"added_by": string,"class_id": number,"client_id": number,"created_at": string,"updated_at": string
+                    "added_at": string,"added_by": string,"class_id": number,"client_id": number,"created_at": string,"position": number | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "added_at"?: string,"added_by"?: string,"class_id": number,"client_id": number,"created_at"?: string,"updated_at"?: string
+                    "added_at"?: string,"added_by"?: string,"class_id": number,"client_id": number,"created_at"?: string,"position"?: number | null,"updated_at"?: string
                   }
                   Update: {
-                    "added_at"?: string,"added_by"?: string,"class_id"?: number,"client_id"?: number,"created_at"?: string,"updated_at"?: string
+                    "added_at"?: string,"added_by"?: string,"class_id"?: number,"client_id"?: number,"created_at"?: string,"position"?: number | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -827,6 +827,9 @@ isOneToOne: false
 "end_override":
 { Args: { "p_override_id": number }; Returns: undefined
                            },
+"import_clients":
+{ Args: { "p_existing": Json,"p_new": Json }; Returns: Json
+                           },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -910,6 +913,9 @@ isOneToOne: false
                            },
 "set_client_classes":
 { Args: { "p_allow_over_capacity"?: boolean,"p_class_ids": (number)[],"p_client_id": number }; Returns: undefined
+                           },
+"set_member_order":
+{ Args: { "p_class_id": number,"p_client_ids": (number)[] }; Returns: undefined
                            },
 "set_override":
 { Args: { "p_client_id": number,"p_exercise_id": number,"p_note"?: string,"p_review_date"?: string,"p_weight_kg": number }; Returns: number

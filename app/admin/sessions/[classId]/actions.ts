@@ -71,3 +71,20 @@ export async function updatePrescription(_: FormState, formData: FormData): Prom
   revalidatePath(`/admin/classes/${classId}`, "layout");
   return { success: "Saved." };
 }
+
+/** Saves the class's client order, used by every session of the class. */
+export async function setClientOrder(classId: number, clientIds: number[]) {
+  await requireStaff();
+  const cls = idSchema.parse(classId);
+  const ids = z.array(idSchema).max(500).parse(clientIds);
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_member_order", {
+    p_class_id: cls,
+    p_client_ids: ids,
+  });
+  if (error) return { error: dbErrorMessage(error, "Could not save the order.") };
+
+  revalidatePath(`/admin/sessions/${cls}`, "layout");
+  return {};
+}

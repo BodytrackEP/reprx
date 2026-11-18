@@ -54,7 +54,13 @@ export default async function ClientsPage({ searchParams }: PageProps<"/admin/cl
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
-        <NewClientButton />
+        <div className="flex items-center gap-3">
+          <Link href="/admin/clients/import"
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            Import CSV
+          </Link>
+          <NewClientButton />
+        </div>
       </div>
 
       <form className="mb-6 flex flex-wrap items-center gap-3">
