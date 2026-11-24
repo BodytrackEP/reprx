@@ -50,7 +50,7 @@ Keep the sandbox domain for the test site, or switch the test site to the new do
    pnpm exec supabase projects list
    ```
    `reprx-prod` must show **Sydney / ap-southeast-2**. If it doesn't, delete the project and create it again **before** going any further.
-3. Note the new **project ref**, the 20-letter ID in the dashboard URL. These steps write it as `<PROD_REF>`.
+3. Note the new **project ref**, the 20-letter ID in the dashboard URL. These steps write it as `<PROD_REF>`. The practice's production project is `bkoseiyuinefetphjrjw` (created 2026-11-24).
 
 ---
 
