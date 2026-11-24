@@ -160,7 +160,7 @@ Public sign-up is off, so the first admin is created by hand:
 
 Make a **second, separate Vercel project** from the same GitHub repo. The existing project stays as the test site.
 
-1. Vercel → **Add New → Project → Import** `iainroberts1980-ui/reprx`.
+1. Vercel → **Add New → Project → Import** `BodytrackEP/reprx`.
    - **Project name:** `reprx-prod`.
    - Framework: Next.js (detected). Leave the build settings at their defaults.
    - **Don't deploy yet** if it offers. Set the variables first, or redeploy after setting them.

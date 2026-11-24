@@ -17,7 +17,7 @@ How the development machine is set up, and the routine for building, testing and
 **Project folder:** `C:\temp\Harth`
 
 **Connections:**
-- **GitHub:** `https://github.com/iainroberts1980-ui/reprx.git`, branch `main`. The sign-in is saved in Windows, so pushes go through without a prompt.
+- **GitHub:** `https://github.com/BodytrackEP/reprx.git` (owned by the Bodytrack EP organisation since 2026-11-24), branch `main`. The sign-in is saved in Windows, so pushes go through without a prompt.
 - **Supabase CLI:** signed in and linked to the hosted **test** project `hjmwswejuklkjexbrudw`, which is in Singapore (an owner exception for test only; see the decisions log in [CLAUDE.md](../CLAUDE.md)).
 - **Vercel:** no connection from the machine. Vercel watches the GitHub repo instead.
 
