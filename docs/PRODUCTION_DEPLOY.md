@@ -2,7 +2,7 @@
 
 How to stand up a new, separate copy of RepRx (a new Vercel web project and a new Supabase database) for real use, then keep it updated alongside the test site. Written 2026-11-17, at 28 migrations.
 
-The current site (`reprx-iainroberts1980-ui.vercel.app` + Supabase project `hjmwswejuklkjexbrudw` in Singapore) stays as the **test** site. Never delete it, and never put real clients in it.
+The current site (`reprx.vercel.app`, formerly `reprx-iainroberts1980-ui.vercel.app`, + Supabase project `hjmwswejuklkjexbrudw` in Singapore) stays as the **test** site. Never delete it, and never put real clients in it.
 
 **The code doesn't change.** The same GitHub repo deploys to both. Everything that differs between test and production lives in settings: Vercel environment variables, Supabase dashboard settings, and one row in the database (`app_settings.environment`).
 

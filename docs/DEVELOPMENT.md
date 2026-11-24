@@ -1,6 +1,6 @@
 # RepRx: development, shipping and deployment
 
-How the development machine is set up, and the routine for building, testing and deploying a change. Last checked 2026-11-19, at 28 migrations.
+How the development machine is set up, and the routine for building, testing and deploying a change. Last checked 2026-11-25, at 28 migrations.
 
 ## 1. What's installed
 
@@ -23,7 +23,22 @@ How the development machine is set up, and the routine for building, testing and
 
 **Local settings file:** `.env.local`. It holds five values that point the app at the **local** Supabase: the URL, publishable key, secret key, database URL and Mailpit URL. It's excluded from Git, and `pnpm env:local` regenerates it at any time.
 
-**New machine:** install Node.js, pnpm, Git and Docker Desktop with WSL2. Clone the repo, run `pnpm install`, then follow section 3. To work with the hosted project, also run `pnpm exec supabase login` and `pnpm exec supabase link --project-ref hjmwswejuklkjexbrudw`.
+**New machine:** install Node.js, pnpm, Git and (ideally) Docker Desktop with WSL2. Then:
+
+```powershell
+git clone https://github.com/BodytrackEP/reprx.git
+cd reprx
+pnpm install
+pnpm exec supabase login                                   # browser sign-in
+pnpm exec supabase link --project-ref hjmwswejuklkjexbrudw # the TEST project
+```
+
+- **GitHub:** the first push opens a browser sign-in. The account needs access to the BodytrackEP organisation.
+- **Vercel:** nothing to set up on the machine; it deploys from GitHub.
+- **Keys:** never copy `.env.local` between machines. Generate it (`pnpm env:local`, with Docker) or rebuild it from the dashboard (section 3a).
+- **Project knowledge** (decisions, rules, deploy steps) is all in this repo: [CLAUDE.md](../CLAUDE.md) and `docs/`. Claude Code reads `CLAUDE.md` when the folder is opened, so nothing else needs copying.
+
+With Docker, follow section 3. Without it, follow section 3a.
 
 ## 2. How the pieces connect
 
@@ -33,7 +48,7 @@ How the development machine is set up, and the routine for building, testing and
  Code in C:\temp\Harth  ──git push──▶ GitHub (main) ──▶ GitHub Actions CI
                                            │
                                            └──▶ Vercel builds and deploys
-                                                  https://reprx-iainroberts1980-ui.vercel.app
+                                                  https://reprx.vercel.app
                                                   (functions in syd1)
                                                           │ reads and writes
  Local Supabase in Docker                                 ▼
@@ -77,6 +92,37 @@ Local Supabase also runs these:
 **Local sign-in:** the seed creates fake clients and classes but no staff you can sign in as. The browser tests create their own. To create a local admin by hand, follow "First admin" in [CLAUDE.md](../CLAUDE.md) using Studio. Local email goes to Mailpit, so password resets work locally too.
 
 **To stop:** press Ctrl+C on `pnpm dev`. `pnpm exec supabase stop` shuts down the Docker containers; you can leave them running.
+
+## 3a. Working without Docker
+
+Docker runs the private local database. Without it you can still do most things, but the database and browser tests only run in CI.
+
+| Task | Without Docker |
+|---|---|
+| Edit code, `pnpm typecheck`, `pnpm lint`, `pnpm test` | Yes |
+| `pnpm dev` | Yes, against the **hosted test** database (below) |
+| Push to GitHub (Vercel deploys) | Yes |
+| `db push --linked` to hosted test or prod (section 7) | Yes |
+| Regenerate types | Yes, with `pnpm exec supabase gen types typescript --linked > lib/database.types.ts` (not `pnpm db:types`, which reads the local database) |
+| `pnpm db:test`, `pnpm db:reset`, trying out a migration | No: needs the local database |
+| `pnpm e2e` | **Never against hosted test**: the tests delete every test client at the end |
+
+**Point the app at hosted test.** Create `.env.local` by hand, with values from the **test** project's dashboard (Project Settings → API Keys):
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=https://hjmwswejuklkjexbrudw.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+SUPABASE_SECRET_KEY=sb_secret_...
+```
+
+- **Never** put production's URL or keys in `.env.local`: local experiments would change real client data.
+- To sign in locally, add `http://localhost:3000/**` to the test project's redirect list (Authentication → URL Configuration). Emails still link to the Site URL, `reprx.vercel.app`.
+
+**CI is the safety net.** GitHub Actions has Docker and runs the database and browser tests on every push and pull request. For a database change:
+
+1. Write the migration and update `lib/database.types.ts` by hand, or regenerate it after step 3.
+2. Push it on a **branch** (`git push origin HEAD:my-change`), open a pull request, and wait for CI to go green.
+3. Only then dry-run and apply it to hosted test (section 7), merge to `main`, and check the test site.
 
 ## 4. Making a change
 
@@ -189,7 +235,7 @@ These aren't in Git, so remember them when anything changes:
 The full list of hosted settings, and the first-admin steps, are in [CLAUDE.md](../CLAUDE.md).
 
 ## 11. Not set up yet
-- **A prod project.** It must be in Sydney and on Supabase Pro. The steps are under "Cut-over" in [CLAUDE.md](../CLAUDE.md), and **no real clients go in until that's done**.
+- **Production, part done.** The prod database (`bkoseiyuinefetphjrjw`, Sydney) has all migrations and `environment = 'prod'`. Still to do: its dashboard auth settings, first admin, a Vercel project with its keys, and its Site URL. The steps are in [PRODUCTION_DEPLOY.md](PRODUCTION_DEPLOY.md), and **no real clients go in until they're done**.
 - **Preview deployments.** The variables aren't set for Preview.
 - **Your own email domain in Mailgun,** so email reaches real staff.
 - **The final cleanup migration,** dropping the old program and RM tables, which is waiting for the owner's go-ahead.
